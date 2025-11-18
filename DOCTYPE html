@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IER-1 "Pathfinder" - Technical Blueprint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0e27;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+        
+        .blueprint-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, 0.05) 25%, rgba(0, 255, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 255, 0.05) 75%, rgba(0, 255, 255, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            overflow: auto;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.95);
+            padding: 20px;
+            border-bottom: 2px solid #00ffff;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        .subtitle {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 5px;
+            color: #ff6b6b;
+            letter-spacing: 2px;
+        }
+        
+        .classification {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            background: #ff6b6b;
+            color: #0a0e27;
+            padding: 5px 15px;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 2px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .main-drawing {
+            position: relative;
+            margin: 120px auto 50px;
+            width: 1400px;
+            height: 1000px;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .component-label {
+            position: absolute;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            padding: 8px 12px;
+            font-size: 11px;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .component-label::before {
+            content: '▸';
+            margin-right: 5px;
+            color: #ff6b6b;
+        }
+        
+        .specs-panel {
+            position: fixed;
+            right: 20px;
+            top: 120px;
+            width: 300px;
+            background: rgba(10, 14, 39, 0.95);
+            border: 2px solid #00ffff;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+        }
+        
+        .specs-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #00ffff;
+            padding-bottom: 10px;
+        }
+        
+        .spec-item {
+            margin-bottom: 12px;
+            font-size: 10px;
+            line-height: 1.6;
+        }
+        
+        .spec-label {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .spec-value {
+            color: #00ffff;
+        }
+        
+        .dimension-line {
+            stroke: #00ffff;
+            stroke-width: 1;
+            stroke-dasharray: 5,5;
+            fill: none;
+        }
+        
+        .dimension-text {
+            fill: #00ffff;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .torus-core {
+            fill: none;
+            stroke: #00ffff;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px #00ffff);
+        }
+        
+        .crew-compartment {
+            fill: rgba(255, 107, 107, 0.2);
+            stroke: #ff6b6b;
+            stroke-width: 2;
+            filter: drop-shadow(0 0 10px #ff6b6b);
+        }
+        
+        .magnetic-coil {
+            fill: none;
+            stroke: #ffd700;
+            stroke-width: 2;
+            opacity: 0.8;
+        }
+        
+        .shield-layer {
+            fill: rgba(0, 255, 255, 0.1);
+            stroke: #00ffff;
+            stroke-width: 1;
+            stroke-dasharray: 3,3;
+        }
+        
+        .energy-flow {
+            stroke: #ffd700;
+            stroke-width: 2;
+            fill: none;
+            animation: dash 3s linear infinite;
+        }
+        
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -100;
+            }
+        }
+        
+        .cross-section {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+            width: 400px;
+            height: 400px;
+            border: 2px solid #00ffff;
+            background: rgba(10, 14, 39, 0.9);
+            padding: 20px;
+        }
+        
+        .phi-spiral {
+            stroke: #ffd700;
+            fill: none;
+            stroke-width: 1;
+            opacity: 0.6;
+        }
+        
+        .callout-line {
+            stroke: #ff6b6b;
+            stroke-width: 1;
+            fill: none;
+        }
+        
+        .glow {
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        
+        .rotating {
+            animation: rotate 30s linear infinite;
+            transform-origin: center;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .legend {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 14, 39, 0.95);
+            border: 2px solid #00ffff;
+            padding: 15px;
+            font-size: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 3px;
+            margin-right: 10px;
+        }
+        
+        .warning-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 107, 107, 0.9);
+            color: #0a0e27;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 11px;
+            letter-spacing: 1px;
+            border-top: 2px solid #ff6b6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="blueprint-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="classification">EXPERIMENTAL • FRONTIER PHYSICS</div>
+            <div class="title">IER-1 "PATHFINDER"</div>
+            <div class="subtitle">INFLATIONARY ENTANGLEMENT RESONATOR • FIRST-GENERATION PROTOTYPE</div>
+        </div>
+        
+        <!-- Main Technical Drawing -->
+        <div class="main-drawing">
+            <svg viewBox="0 0 1400 1000" xmlns="http://www.w3.org/2000/svg">
+                <!-- Grid reference points -->
+                <circle cx="700" cy="500" r="3" fill="#00ffff" opacity="0.5"/>
+                
+                <!-- Main Torus Structure (side view) -->
+                <ellipse cx="700" cy="500" rx="320" ry="280" class="torus-core"/>
+                <ellipse cx="700" cy="500" rx="220" ry="180" class="torus-core"/>
+                
+                <!-- Inner plasma channel -->
+                <ellipse cx="700" cy="500" rx="270" ry="230" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.4"/>
+                
+                <!-- Magnetic field coils (18 shown as sections) -->
+                <g class="rotating">
+                    <circle cx="700" cy="500" r="340" fill="none" stroke="#ffd700" stroke-width="1" stroke-dasharray="30,20" opacity="0.6"/>
+                    <circle cx="700" cy="500" r="360" fill="none" stroke="#ffd700" stroke-width="1" stroke-dasharray="30,20" opacity="0.4"/>
+                </g>
+                
+                <!-- Coil positions (simplified) -->
+                <line x1="520" y1="300" x2="520" y2="700" class="magnetic-coil"/>
+                <line x1="620" y1="250" x2="620" y2="750" class="magnetic-coil"/>
+                <line x1="780" y1="250" x2="780" y2="750" class="magnetic-coil"/>
+                <line x1="880" y1="300" x2="880" y2="700" class="magnetic-coil"/>
+                
+                <!-- Crew Compartment (sphere in center) -->
+                <circle cx="700" cy="500" r="90" class="crew-compartment"/>
+                
+                <!-- Φ-Spiral Shield Layers -->
+                <circle cx="700" cy="500" r="110" class="shield-layer"/>
+                <circle cx="700" cy="500" r="125" class="shield-layer"/>
+                <circle cx="700" cy="500" r="140" class="shield-layer"/>
+                <circle cx="700" cy="500" r="155" class="shield-layer"/>
+                
+                <!-- Energy flow lines -->
+                <path d="M 400 500 Q 550 450 700 500" class="energy-flow" stroke-dasharray="10,10"/>
+                <path d="M 1000 500 Q 850 550 700 500" class="energy-flow" stroke-dasharray="10,10"/>
+                
+                <!-- Casimir Cavity Detail (magnified section) -->
+                <rect x="950" y="200" width="350" height="250" fill="rgba(10,14,39,0.8)" stroke="#00ffff" stroke-width="2"/>
+                <text x="1125" y="230" text-anchor="middle" class="dimension-text">FRACTAL BOUNDARY (10⁸× MAGNIFIED)</text>
+                
+                <!-- Fractal pattern representation -->
+                <g transform="translate(1125, 325)">
+                    <!-- Φ-spiral approximation -->
+                    <path d="M 0 0 Q 20 -15 35 -10 Q 45 0 40 20 Q 25 35 0 30 Q -25 15 -20 -10 Q -5 -30 20 -25" 
+                          class="phi-spiral"/>
+                    <path d="M 0 0 Q 15 -10 25 -7 Q 32 0 28 15 Q 18 25 0 22 Q -18 10 -15 -7 Q -3 -22 15 -18" 
+                          class="phi-spiral" opacity="0.8"/>
+                    <path d="M 0 0 Q 10 -7 18 -5 Q 23 0 20 10 Q 13 18 0 16 Q -13 7 -10 -5 Q -2 -16 10 -13" 
+                          class="phi-spiral" opacity="0.6"/>
+                    <path d="M 0 0 Q 7 -5 12 -3 Q 16 0 14 7 Q 9 12 0 11 Q -9 5 -7 -3 Q -1 -11 7 -9" 
+                          class="phi-spiral" opacity="0.4"/>
+                </g>
+                
+                <!-- Dimension lines -->
+                <line x1="380" y1="500" x2="320" y2="500" class="dimension-line"/>
+                <line x1="320" y1="400" x2="320" y2="600" class="dimension-line"/>
+                <text x="250" y="505" class="dimension-text">R = 8.2 m</text>
+                
+                <line x1="700" y1="410" x2="700" y2="350" class="dimension-line"/>
+                <line x1="620" y1="350" x2="780" y2="350" class="dimension-line"/>
+                <text x="700" y="340" text-anchor="middle" class="dimension-text">r = 3.13 m</text>
+                
+                <line x1="700" y1="500" x2="700" y2="410" class="dimension-line"/>
+                <text x="715" y="460" class="dimension-text">Φ-ratio</text>
+                
+                <!-- Crew compartment dimension -->
+                <line x1="700" y1="590" x2="700" y2="650" class="dimension-line"/>
+                <text x="700" y="670" text-anchor="middle" class="dimension-text">Crew: Ø 5 m</text>
+                
+                <!-- Callout lines -->
+                <line x1="790" y1="500" x2="900" y2="400" class="callout-line"/>
+                <line x1="430" y1="350" x2="350" y2="250" class="callout-line"/>
+                <line x1="970" y1="350" x2="1050" y2="250" class="callout-line"/>
+                
+                <!-- Component labels (will be styled separately) -->
+                <text x="910" y="390" class="dimension-text" font-size="10">PLASMA TORUS</text>
+                <text x="250" y="240" class="dimension-text" font-size="10">MAGNETIC COILS</text>
+                <text x="1060" y="240" class="dimension-text" font-size="10">ZPE CAVITY</text>
+                
+                <!-- Top view (small) -->
+                <g transform="translate(200, 120)">
+                    <text x="0" y="-10" class="dimension-text" font-size="11">TOP VIEW</text>
+                    <rect x="-5" y="-5" width="210" height="210" fill="none" stroke="#00ffff" stroke-width="1"/>
+                    <circle cx="100" cy="100" r="80" class="torus-core" stroke-width="1"/>
+                    <circle cx="100" cy="100" r="50" class="torus-core" stroke-width="1"/>
+                    <!-- Coil positions -->
+                    <circle cx="100" cy="30" r="4" fill="#ffd700"/>
+                    <circle cx="148" cy="52" r="4" fill="#ffd700"/>
+                    <circle cx="170" cy="100" r="4" fill="#ffd700"/>
+                    <circle cx="148" cy="148" r="4" fill="#ffd700"/>
+                    <circle cx="100" cy="170" r="4" fill="#ffd700"/>
+                    <circle cx="52" cy="148" r="4" fill="#ffd700"/>
+                    <circle cx="30" cy="100" r="4" fill="#ffd700"/>
+                    <circle cx="52" cy="52" r="4" fill="#ffd700"/>
+                    <!-- Crew -->
+                    <circle cx="100" cy="100" r="15" fill="rgba(255,107,107,0.3)" stroke="#ff6b6b" stroke-width="1"/>
+                </g>
+                
+                <!-- Front view (small) -->
+                <g transform="translate(200, 380)">
+                    <text x="0" y="-10" class="dimension-text" font-size="11">FRONT VIEW</text>
+                    <rect x="-5" y="-5" width="210" height="210" fill="none" stroke="#00ffff" stroke-width="1"/>
+                    <circle cx="100" cy="100" r="70" class="torus-core" stroke-width="1"/>
+                    <circle cx="100" cy="100" r="40" fill="none" stroke="#00ffff" stroke-width="2"/>
+                    <circle cx="100" cy="100" r="15" class="crew-compartment" stroke-width="1"/>
+                    <!-- Shield layers -->
+                    <circle cx="100" cy="100" r="20" fill="none" stroke="#00ffff" stroke-width="0.5" stroke-dasharray="2,2"/>
+                    <circle cx="100" cy="100" r="25" fill="none" stroke="#00ffff" stroke-width="0.5" stroke-dasharray="2,2"/>
+                    <circle cx="100" cy="100" r="30" fill="none" stroke="#00ffff" stroke-width="0.5" stroke-dasharray="2,2"/>
+                </g>
+                
+                <!-- Energy flow diagram -->
+                <g transform="translate(1100, 600)">
+                    <text x="0" y="0" class="dimension-text" font-size="11">ENERGY FLOW</text>
+                    <rect x="-5" y="10" width="250" height="180" fill="rgba(10,14,39,0.8)" stroke="#00ffff" stroke-width="1"/>
+                    
+                    <text x="10" y="35" class="dimension-text" font-size="9">ZPE INPUT</text>
+                    <line x1="10" y1="45" x2="80" y2="45" stroke="#ffd700" stroke-width="2"/>
+                    <text x="90" y="50" class="dimension-text" font-size="8">3 MW</text>
+                    
+                    <text x="10" y="70" class="dimension-text" font-size="9">PLASMA HEATING</text>
+                    <line x1="10" y1="80" x2="100" y2="80" stroke="#ff6b6b" stroke-width="2"/>
+                    <text x="110" y="85" class="dimension-text" font-size="8">110 MW</text>
+                    
+                    <text x="10" y="105" class="dimension-text" font-size="9">RF LADDER</text>
+                    <line x1="10" y1="115" x2="60" y2="115" stroke="#00ffff" stroke-width="2"/>
+                    <text x="70" y="120" class="dimension-text" font-size="8">100 MW</text>
+                    
+                    <text x="10" y="140" class="dimension-text" font-size="9">NEGATIVE PULSE</text>
+                    <line x1="10" y1="150" x2="25" y2="150" stroke="#ff00ff" stroke-width="2"/>
+                    <text x="35" y="155" class="dimension-text" font-size="8">10⁻²⁷ J</text>
+                    
+                    <text x="10" y="175" class="dimension-text" font-size="9" fill="#ffd700">TOTAL: 213 MW</text>
+                </g>
+            </svg>
+        </div>
+        
+        <!-- Specifications Panel -->
+        <div class="specs-panel">
+            <div class="specs-title">⚡ TECHNICAL SPECIFICATIONS</div>
+            
+            <div class="spec-item">
+                <div class="spec-label">DESIGNATION:</div>
+                <div class="spec-value">IER-1 "Pathfinder"</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">PROPULSION TYPE:</div>
+                <div class="spec-value">Inflationary Entanglement Resonator</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">TORUS GEOMETRY:</div>
+                <div class="spec-value">Major R: 8.2 m<br>Minor r: 3.13 m<br>Ratio: 1/Φ² = 0.382</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">MAGNETIC FIELD:</div>
+                <div class="spec-value">Toroidal: 12 T<br>Poloidal: 2-3 T<br>Coils: 18× NbTi @ 4.2 K</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">PLASMA PARAMETERS:</div>
+                <div class="spec-value">Density: 8×10¹⁹ m⁻³<br>Temp: 15 keV (1.7×10⁸ K)<br>Current: 8 MA</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">CREW CAPACITY:</div>
+                <div class="spec-value">4 personnel<br>Life support: 72 hr<br>G-rating: 15 g sustained</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">POWER SYSTEMS:</div>
+                <div class="spec-value">ZPE Harvest: 3 MW (est.)<br>Fusion: 110 MW input<br>Total: 213 MW operational</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">RANGE:</div>
+                <div class="spec-value">Instantaneous (non-local)<br>Tested: 4.24 ly (Proxima)<br>Theoretical: Unlimited</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">JUMP PREPARATION:</div>
+                <div class="spec-value">Ladder climb: 20-30 min<br>Resonance lock: 10-60 s<br>Traversal: 30-100 ns (external)</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">SHIELDING:</div>
+                <div class="spec-value">Metric: Analog gravity (Φ-spiral)<br>EM: Mu-metal + copper<br>Radiation: 20 cm H₂O equiv.</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">NAVIGATION:</div>
+                <div class="spec-value">Harmonic: 3-6-9 ladder<br>Base: 7.83 Hz (Schumann)<br>Accuracy: ±0.01 AU</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">MASS:</div>
+                <div class="spec-value">Dry: 185 tons<br>Wet: 250 tons<br>Crew + cargo: 15 tons</div>
+            </div>
+            
+            <div class="spec-item">
+                <div class="spec-label">STATUS:</div>
+                <div class="spec-value" style="color: #ff6b6b;">PROTOTYPE<br>Testing: TRL-4<br>Est. First Jump: 2040</div>
+            </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="legend">
+            <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #00ffff; padding-bottom: 5px;">LEGEND</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00ffff;"></div>
+                <span>Torus Structure / Primary Systems</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffd700;"></div>
+                <span>Magnetic Coils / Energy Flow</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff6b6b;"></div>
+                <span>Crew Compartment / Life Support</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00ffff; opacity: 0.3;"></div>
+                <span>Shield Layers / Metric Transition</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff00ff;"></div>
+                <span>Quantum Systems / Casimir Cavity</span>
+            </div>
+        </div>
+        
+        <!-- Warning Banner -->
+        <div class="warning-banner">
+            ⚠ EXPERIMENTAL TECHNOLOGY • NON-LOCAL PROPULSION • UNAUTHORIZED ACCESS PROHIBITED ⚠
+        </div>
+    </div>
+</body>
+</html>
