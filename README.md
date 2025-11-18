@@ -12,7 +12,7 @@ The core hypothesis: Pre-existing super-horizon entanglement from cosmic inflati
 - **Test 2:** Axion-resonant plasma torus for mode coupling (superradiance gain >10^6).
 - **Test 3:** Analog gravity metric shield for inertial damping (~10^3× target).
 
-Full 180-page report: [PDF Link or GitHub PDF](link-to-report.pdf).  
+Full 180-page report:  
 Interactive Blueprint: [Live HTML Demo](link-to-html).
 
 ## Technical Specs (From Blueprint)
