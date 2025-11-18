@@ -13,7 +13,7 @@ The core hypothesis: Pre-existing super-horizon entanglement from cosmic inflati
 - **Test 3:** Analog gravity metric shield for inertial damping (~10^3× target).
 
 Full 180-page report:  
-Interactive Blueprint: [Live HTML Demo](link-to-html).
+Interactive Blueprint: Live HTML for you to run
 
 ## Technical Specs (From Blueprint)
 - **Geometry:** Major R = 8.2 m, minor r = 3.13 m (1/Φ² ratio for plasma stability [](grok_render_citation_card_json={"cardIds":["b11622"]})).
