@@ -23,7 +23,7 @@ Interactive Blueprint: Live HTML for you to run
 - **Mass:** 185 tons dry.
 
 ## Why Open-Source?
-This is frontier physics—12–22% success odds (comparable to Higgs/LIGO pre-run). If it works, humanity gets the stars. If not, we get quantum batteries and fusion spin-offs worth trillions. No gatekeeping: build, test, improve.
+This is frontier physics—12–22% success odds (comparable to Higgs/LIGO pre-run). If it works, humanity gets the stars. If not, we get quantum batteries and fusion spin-offs worth trillions. No gatekeeping: build, test, improve.   >>>>    ( update we now are looking at 40-50 succsess odds !) <<<<
 
 ## Get Involved
 - **Test 1 Funding:** $1.4M needed for Φ-fractal cavity fab (NSF/DOE eligible). Donate/simulate here.
