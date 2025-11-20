@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZPE Resonance Drive - Interactive 3D Blueprint</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #00ff88;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        h1 {
+            color: #00ff88;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        h2 {
+            color: #00ddff;
+            font-size: 14px;
+            margin: 15px 0 10px 0;
+            text-transform: uppercase;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            color: #00ddff;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px 5px 5px 0;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #00ddff;
+            transform: scale(1.05);
+        }
+        
+        button.active {
+            background: #ff0088;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #00ff8844;
+        }
+        
+        .stat-label {
+            color: #00ddff;
+        }
+        
+        .stat-value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .layer-info {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff88;
+            font-size: 11px;
+        }
+        
+        .warning {
+            color: #ff8800;
+            font-size: 11px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 136, 0, 0.1);
+            border-left: 3px solid #ff8800;
+        }
+        
+        #legend {
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 11px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid #00ff88;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="controls">
+            <h1>⚡ ZPE Drive Controls</h1>
+            
+            <div class="control-group">
+                <label>Rotation Speed: <span id="speedValue">1.0</span>x</label>
+                <input type="range" id="speedSlider" min="0" max="5" step="0.1" value="1">
+            </div>
+            
+            <div class="control-group">
+                <label>Camera Distance: <span id="distValue">15</span>m</label>
+                <input type="range" id="distSlider" min="5" max="30" step="0.5" value="15">
+            </div>
+            
+            <div class="control-group">
+                <button id="toggleTorus">Torus Drive: ON</button>
+                <button id="toggleShield">Shield: ON</button>
+                <button id="toggleCrew">Crew Module: ON</button>
+            </div>
+            
+            <div class="control-group">
+                <button id="toggleWireframe">Wireframe Mode</button>
+                <button id="toggleLabels">Labels: ON</button>
+                <button id="resetCamera">Reset View</button>
+            </div>
+            
+            <h2>Individual Shells</h2>
+            <div class="control-group">
+                <button id="shell1" class="active">Shell 1</button>
+                <button id="shell2" class="active">Shell 2</button>
+                <button id="shell3" class="active">Shell 3</button>
+                <button id="shell4" class="active">Shell 4</button>
+                <button id="shell5" class="active">Shell 5</button>
+                <button id="shell6" class="active">Shell 6</button>
+                <button id="shell7" class="active">Shell 7</button>
+            </div>
+            
+            <div class="warning">
+                ⚠️ Drag to rotate view<br>
+                ⚠️ Scroll to zoom<br>
+                ⚠️ All rotations are real-time calculated
+            </div>
+        </div>
+        
+        <div id="info">
+            <h1>📊 System Specifications</h1>
+            
+            <h2>Main Torus Drive</h2>
+            <div class="stat">
+                <span class="stat-label">Major Radius (R):</span>
+                <span class="stat-value">5.0 m</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Minor Radius (r):</span>
+                <span class="stat-value">1.91 m (Φ⁻²)</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Plasma Temp:</span>
+                <span class="stat-value">10⁷ K</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Rotation Speed:</span>
+                <span class="stat-value">0.95c</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Power Output:</span>
+                <span class="stat-value">2.05 TJ</span>
+            </div>
+            
+            <h2>Matryoshka Shield (7 Shells)</h2>
+            
+            <div class="layer-info">
+                <strong>Shell 1 (Outer)</strong><br>
+                Radius: 3.5m | RPM: 10,000<br>
+                Material: Ti-Al Alloy<br>
+                Mass: 500 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 2</strong><br>
+                Radius: 3.0m | RPM: 15,000<br>
+                Material: Ti-Al Alloy<br>
+                Mass: 400 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 3</strong><br>
+                Radius: 2.5m | RPM: 20,000<br>
+                Material: Ti-Al Alloy<br>
+                Mass: 300 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 4</strong><br>
+                Radius: 2.0m | RPM: 25,000<br>
+                Material: Carbon Composite<br>
+                Mass: 200 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 5</strong><br>
+                Radius: 1.5m | RPM: 30,000<br>
+                Material: Carbon Composite<br>
+                Mass: 150 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 6</strong><br>
+                Radius: 1.0m | RPM: 35,000<br>
+                Material: Geodesic Carbon<br>
+                Mass: 100 kg
+            </div>
+            
+            <div class="layer-info">
+                <strong>Shell 7 (Inner)</strong><br>
+                Radius: 0.5m | RPM: 40,000<br>
+                Material: Geodesic Carbon<br>
+                Mass: 50 kg
+            </div>
+            
+            <h2>Crew Protection</h2>
+            <div class="stat">
+                <span class="stat-label">Frame-Drag Factor:</span>
+                <span class="stat-value">10⁹× dampening</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Effective g-force:</span>
+                <span class="stat-value">3-10 g</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Survival Rate:</span>
+                <span class="stat-value">98%</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Jump Duration:</span>
+                <span class="stat-value">0.127 s (perceived)</span>
+            </div>
+            
+            <div id="legend">
+                <h2>Color Legend</h2>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff88;"></div>
+                    <span>Main Torus (ZPE Drive)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff0088;"></div>
+                    <span>Plasma Field</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ddff;"></div>
+                    <span>Outer Shells (1-3)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffaa00;"></div>
+                    <span>Middle Shells (4-5)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff00ff;"></div>
+                    <span>Inner Shells (6-7)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffffff;"></div>
+                    <span>Crew Module</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(15, 10, 15);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambientLight);
+        
+        const pointLight1 = new THREE.PointLight(0x00ff88, 1, 100);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x00ddff, 0.5, 100);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        // Golden ratio for torus
+        const PHI = 1.618033988749;
+        
+        // State variables
+        let rotationSpeed = 1.0;
+        let wireframeMode = false;
+        let showLabels = true;
+        let showTorus = true;
+        let showShield = true;
+        let showCrew = true;
+        const shellVisibility = [true, true, true, true, true, true, true];
+        
+        // Main Torus Drive
+        const torusGeometry = new THREE.TorusGeometry(5, 5 / (PHI * PHI), 32, 100);
+        const torusMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.6,
+            wireframe: false,
+            emissive: 0x00ff88,
+            emissiveIntensity: 0.3
+        });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        scene.add(torus);
+        
+        // Plasma field (inner glow)
+        const plasmaGeometry = new THREE.TorusGeometry(5, 5 / (PHI * PHI) * 0.8, 32, 100);
+        const plasmaMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0088,
+            transparent: true,
+            opacity: 0.4,
+            wireframe: false
+        });
+        const plasma = new THREE.Mesh(plasmaGeometry, plasmaMaterial);
+        scene.add(plasma);
+        
+        // Matryoshka Shield - 7 nested shells
+        const shells = [];
+        const shellRadii = [3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
+        const shellRPMs = [10000, 15000, 20000, 25000, 30000, 35000, 40000];
+        const shellColors = [
+            0x00ddff, 0x00ddff, 0x00ddff,  // Outer (Ti-Al)
+            0xffaa00, 0xffaa00,            // Middle (Carbon Composite)
+            0xff00ff, 0xff00ff             // Inner (Geodesic)
+        ];
+        
+        shellRadii.forEach((radius, i) => {
+            // Create geodesic sphere (icosahedron for geodesic look)
+            const geometry = new THREE.IcosahedronGeometry(radius, 2);
+            const material = new THREE.MeshPhongMaterial({
+                color: shellColors[i],
+                transparent: true,
+                opacity: 0.3,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                emissive: shellColors[i],
+                emissiveIntensity: 0.2
+            });
+            const shell = new THREE.Mesh(geometry, material);
+            
+            // Add wireframe overlay for geodesic pattern
+            const wireframeGeo = new THREE.EdgesGeometry(geometry);
+            const wireframeMat = new THREE.LineBasicMaterial({ 
+                color: shellColors[i], 
+                transparent: true, 
+                opacity: 0.6 
+            });
+            const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+            shell.add(wireframe);
+            
+            // Random rotation axes for each shell
+            shell.userData = {
+                rotationAxis: new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize(),
+                rpm: shellRPMs[i],
+                index: i
+            };
+            
+            shells.push(shell);
+            scene.add(shell);
+        });
+        
+        // Crew Module (center sphere)
+        const crewGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+        const crewMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.5
+        });
+        const crewModule = new THREE.Mesh(crewGeometry, crewMaterial);
+        scene.add(crewModule);
+        
+        // Grid helper
+        const gridHelper = new THREE.GridHelper(20, 20, 0x00ff88, 0x004400);
+        gridHelper.position.y = -5;
+        scene.add(gridHelper);
+        
+        // Axis helper
+        const axesHelper = new THREE.AxesHelper(8);
+        scene.add(axesHelper);
+        
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+                
+                camera.position.x += deltaX * 0.05;
+                camera.position.y -= deltaY * 0.05;
+                camera.lookAt(0, 0, 0);
+                
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('wheel', (e) => {
+            const zoomSpeed = 0.1;
+            const direction = e.deltaY > 0 ? 1 : -1;
+            camera.position.multiplyScalar(1 + direction * zoomSpeed);
+            camera.lookAt(0, 0, 0);
+        });
+        
+        // Controls
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            rotationSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = rotationSpeed.toFixed(1);
+        });
+        
+        document.getElementById('distSlider').addEventListener('input', (e) => {
+            const dist = parseFloat(e.target.value);
+            const currentPos = camera.position.clone().normalize();
+            camera.position.copy(currentPos.multiplyScalar(dist));
+            camera.lookAt(0, 0, 0);
+            document.getElementById('distValue').textContent = dist;
+        });
+        
+        document.getElementById('toggleTorus').addEventListener('click', function() {
+            showTorus = !showTorus;
+            torus.visible = showTorus;
+            plasma.visible = showTorus;
+            this.textContent = 'Torus Drive: ' + (showTorus ? 'ON' : 'OFF');
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleShield').addEventListener('click', function() {
+            showShield = !showShield;
+            shells.forEach(shell => {
+                if (shellVisibility[shell.userData.index]) {
+                    shell.visible = showShield;
+                }
+            });
+            this.textContent = 'Shield: ' + (showShield ? 'ON' : 'OFF');
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleCrew').addEventListener('click', function() {
+            showCrew = !showCrew;
+            crewModule.visible = showCrew;
+            this.textContent = 'Crew Module: ' + (showCrew ? 'ON' : 'OFF');
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleWireframe').addEventListener('click', function() {
+            wireframeMode = !wireframeMode;
+            torusMaterial.wireframe = wireframeMode;
+            plasmaMaterial.wireframe = wireframeMode;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleLabels').addEventListener('click', function() {
+            showLabels = !showLabels;
+            this.textContent = 'Labels: ' + (showLabels ? 'ON' : 'OFF');
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('resetCamera').addEventListener('click', () => {
+            camera.position.set(15, 10, 15);
+            camera.lookAt(0, 0, 0);
+            document.getElementById('distSlider').value = 15;
+            document.getElementById('distValue').textContent = '15';
+        });
+        
+        // Individual shell controls
+        for (let i = 1; i <= 7; i++) {
+            document.getElementById(`shell${i}`).addEventListener('click', function() {
+                shellVisibility[i - 1] = !shellVisibility[i - 1];
+                shells[i - 1].visible = shellVisibility[i - 1] && showShield;
+                this.classList.toggle('active');
+            });
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate torus (main drive)
+            if (showTorus) {
+                torus.rotation.y += 0.01 * rotationSpeed;
+                plasma.rotation.y += 0.015 * rotationSpeed;
+                plasma.rotation.x += 0.005 * rotationSpeed;
+            }
+            
+            // Rotate each shell independently with realistic RPM scaling
+            shells.forEach((shell, i) => {
+                if (shell.visible) {
+                    // Convert RPM to radians per frame (60 fps assumed)
+                    const rpmFactor = shell.userData.rpm / 60000; // Scale down for visibility
+                    shell.rotateOnAxis(shell.userData.rotationAxis, rpmFactor * rotationSpeed);
+                    
+                    // Add slight wobble for realism
+                    shell.rotation.x += Math.sin(Date.now() * 0.001 + i) * 0.0001;
+                }
+            });
+            
+            // Subtle pulsing glow on plasma
+            plasmaMaterial.opacity = 0.3 + Math.sin(Date.now() * 0.003) * 0.1;
+            
+            // Crew module stays still (it's in the center of the time bubble)
+            crewModule.rotation.y += 0.001; // Very slow rotation for visual interest
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start animation
+        animate();
+        
+        console.log('ZPE Resonance Drive Blueprint v1.0 - All systems nominal');
+        console.log('Φ-optimized torus geometry active');
+        console.log('Matryoshka shield: 7 shells operational');
+    </script>
+</body>
+</html>
