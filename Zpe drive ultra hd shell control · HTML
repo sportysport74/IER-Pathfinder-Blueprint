@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZPE Drive - Ultra HD Shell Control</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+        
+        :root {
+            --plasma-cyan: #00ffff;
+            --plasma-magenta: #ff00ff;
+            --plasma-yellow: #ffff00;
+            --energy-blue: #0099ff;
+            --warning-orange: #ff6600;
+            --success-green: #00ff66;
+            --bg-dark: #0a0a14;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: radial-gradient(ellipse at center, #0f0f1f 0%, #0a0a14 50%, #050509 100%);
+            color: #e0e0ff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridScroll 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes gridScroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 2200px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 25px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, var(--plasma-cyan), var(--plasma-magenta), var(--plasma-yellow));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+            letter-spacing: 4px;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            color: #8888aa;
+            margin-top: 8px;
+            letter-spacing: 2px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 12px;
+            margin-bottom: 15px;
+            align-items: start;
+        }
+        
+        .panel {
+            background: rgba(10, 30, 50, 0.95);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+            max-height: 750px;
+            overflow-y: auto;
+        }
+        
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .panel::-webkit-scrollbar-track {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 4px;
+        }
+        
+        .panel::-webkit-scrollbar-thumb {
+            background: var(--plasma-cyan);
+            border-radius: 4px;
+        }
+        
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--plasma-cyan);
+            margin-bottom: 12px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .viewer-3d {
+            background: rgba(10, 30, 50, 0.95);
+            border: 2px solid var(--plasma-cyan);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+        }
+        
+        #canvas3d {
+            width: 100%;
+            height: 750px;
+            cursor: grab;
+            border-radius: 5px;
+            display: block;
+        }
+        
+        #canvas3d:active {
+            cursor: grabbing;
+        }
+        
+        /* Shell Control */
+        .shell-control {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: rgba(0, 30, 50, 0.5);
+            border-left: 3px solid var(--plasma-cyan);
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .shell-control:hover {
+            background: rgba(0, 30, 50, 0.7);
+            border-left-color: var(--plasma-magenta);
+            transform: translateX(3px);
+        }
+        
+        .shell-control.active {
+            border-left-color: var(--success-green);
+            background: rgba(0, 255, 102, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+        }
+        
+        .shell-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .shell-name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--plasma-cyan);
+        }
+        
+        .shell-toggle {
+            padding: 4px 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--plasma-cyan);
+            border-radius: 4px;
+            color: var(--plasma-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .shell-toggle.active {
+            background: var(--plasma-cyan);
+            color: #0a0a14;
+        }
+        
+        .shell-data {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+        }
+        
+        .shell-stat {
+            color: #8888aa;
+        }
+        
+        .shell-value {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--plasma-cyan);
+            text-align: right;
+        }
+        
+        .shell-slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            margin-top: 5px;
+        }
+        
+        .shell-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, var(--plasma-cyan), var(--plasma-magenta));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--plasma-cyan);
+            border: 2px solid #0a0a14;
+        }
+        
+        .shell-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, var(--plasma-cyan), var(--plasma-magenta));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--plasma-cyan);
+            border: 2px solid #0a0a14;
+        }
+        
+        .shell-slider::-webkit-slider-thumb:hover {
+            width: 18px;
+            height: 18px;
+            box-shadow: 0 0 15px var(--plasma-cyan);
+        }
+        
+        /* Frequency Resonance Display */
+        .freq-resonance {
+            margin-bottom: 12px;
+            padding: 10px;
+            background: rgba(0, 20, 40, 0.6);
+            border-radius: 5px;
+        }
+        
+        .freq-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+        }
+        
+        .freq-name {
+            color: #8888aa;
+        }
+        
+        .freq-value {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--plasma-magenta);
+            font-weight: 600;
+        }
+        
+        .freq-bar {
+            height: 6px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .freq-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--energy-blue), var(--plasma-cyan), var(--plasma-magenta));
+            border-radius: 3px;
+            animation: freqPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes freqPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+        
+        .resonance-indicator {
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: var(--success-green);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .resonance-indicator.active {
+            opacity: 1;
+            animation: resonancePulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes resonancePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Control Buttons */
+        .control-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 2px solid var(--plasma-cyan);
+            border-radius: 6px;
+            color: var(--plasma-cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.running {
+            background: linear-gradient(135deg, rgba(0, 255, 102, 0.2), rgba(0, 255, 255, 0.2));
+            border-color: var(--success-green);
+            color: var(--success-green);
+            animation: btnPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes btnPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 102, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(0, 255, 102, 0.8); }
+        }
+        
+        .control-btn.danger {
+            border-color: var(--warning-orange);
+            color: var(--warning-orange);
+        }
+        
+        /* Visualization Options */
+        .viz-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: rgba(0, 30, 50, 0.4);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .viz-option:hover {
+            background: rgba(0, 30, 50, 0.6);
+        }
+        
+        .viz-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--plasma-cyan);
+            border-radius: 3px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .viz-checkbox.checked {
+            background: var(--plasma-cyan);
+        }
+        
+        .viz-checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: -2px;
+            left: 2px;
+            color: #0a0a14;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Status Display */
+        .status-display {
+            padding: 12px;
+            background: rgba(0, 20, 40, 0.6);
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.75rem;
+        }
+        
+        .status-label {
+            color: #8888aa;
+        }
+        
+        .status-value {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--plasma-cyan);
+            font-weight: 600;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            color: #8888aa;
+            font-size: 0.75rem;
+        }
+        
+        @media (max-width: 1600px) {
+            .main-grid {
+                grid-template-columns: 280px 1fr 280px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ZPE RESONANCE DRIVE</h1>
+            <div class="subtitle">ULTRA HD • INDIVIDUAL SHELL CONTROL • INTER-LAYER FREQUENCY RESONANCE</div>
+        </header>
+        
+        <div class="main-grid">
+            <!-- LEFT: Shell Controls -->
+            <div class="panel">
+                <h2 class="panel-title">🔧 Shell Controls</h2>
+                
+                <div id="shellControls">
+                    <!-- Generated dynamically -->
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <button class="control-btn" onclick="activateAllShells()">⚡ ACTIVATE ALL</button>
+                    <button class="control-btn" onclick="syncShells()">🔄 SYNC PHASES</button>
+                    <button class="control-btn danger" onclick="deactivateAllShells()">⏸ PAUSE ALL</button>
+                </div>
+            </div>
+            
+            <!-- CENTER: 3D Viewer -->
+            <div class="viewer-3d">
+                <canvas id="canvas3d"></canvas>
+            </div>
+            
+            <!-- RIGHT: Frequency & Visualization -->
+            <div class="panel">
+                <h2 class="panel-title">🎵 Inter-Shell Frequencies</h2>
+                
+                <div id="frequencyDisplay">
+                    <!-- Generated dynamically -->
+                </div>
+                
+                <h2 class="panel-title" style="margin-top: 20px;">👁 Visualization Options</h2>
+                
+                <div class="viz-option" onclick="toggleViz('energy')">
+                    <span>Energy Beams</span>
+                    <div class="viz-checkbox checked" id="viz-energy"></div>
+                </div>
+                <div class="viz-option" onclick="toggleViz('freq')">
+                    <span>Frequency Waves</span>
+                    <div class="viz-checkbox checked" id="viz-freq"></div>
+                </div>
+                <div class="viz-option" onclick="toggleViz('plasma')">
+                    <span>Plasma Streams</span>
+                    <div class="viz-checkbox checked" id="viz-plasma"></div>
+                </div>
+                <div class="viz-option" onclick="toggleViz('particles')">
+                    <span>Vacuum Particles</span>
+                    <div class="viz-checkbox checked" id="viz-particles"></div>
+                </div>
+                <div class="viz-option" onclick="toggleViz('resonance')">
+                    <span>Resonance Lines</span>
+                    <div class="viz-checkbox checked" id="viz-resonance"></div>
+                </div>
+                
+                <h2 class="panel-title" style="margin-top: 20px;">📊 System Status</h2>
+                
+                <div class="status-display">
+                    <div class="status-item">
+                        <span class="status-label">Total Power:</span>
+                        <span class="status-value" id="totalPower">1.45 MW</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Active Shells:</span>
+                        <span class="status-value" id="activeShells">7/7</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Resonance:</span>
+                        <span class="status-value" id="resonanceStatus">LOCKED</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Phase Sync:</span>
+                        <span class="status-value" id="phaseSync">±0.3°</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Wormhole:</span>
+                        <span class="status-value" id="wormholeStatus">STANDBY</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <button class="control-btn" id="startBtn" onclick="handleStart()">▶ START SEQUENCE</button>
+                    <button class="control-btn" id="nucleateBtn" onclick="handleNucleate()">🌀 NUCLEATE</button>
+                    <button class="control-btn danger" id="shutdownBtn" onclick="handleShutdown()">🛑 SHUTDOWN</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <strong>ZPE Resonance Drive - Ultra HD Shell Control System v5.0</strong><br>
+            Individual Shell Control • Inter-Layer Frequency Resonance • High Definition Rendering
+        </footer>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene globals
+        let scene, camera, renderer;
+        let plasmaCore, shells = [], emitters = [];
+        let energyBeams = [], frequencyWaves = [], plasmaStreams = [], particles = [];
+        let resonanceLines = [];
+        let rotationSpeed = 0.001;
+        
+        // Shell configuration
+        const shellConfig = [
+            { name: 'Shell 1', radius: 1.900, freq: 3, rpm: 1620, color: 0x00ffff, active: true, speed: 1.0 },
+            { name: 'Shell 2', radius: 2.343, freq: 9, rpm: 4860, color: 0x00ccff, active: true, speed: 1.0 },
+            { name: 'Shell 3', radius: 2.786, freq: 27, rpm: 14580, color: 0x0099ff, active: true, speed: 1.0 },
+            { name: 'Shell 4', radius: 3.229, freq: 81, rpm: 43740, color: 0x0066ff, active: true, speed: 1.0 },
+            { name: 'Shell 5', radius: 3.672, freq: 243, rpm: 131220, color: 0x0033ff, active: true, speed: 1.0 },
+            { name: 'Shell 6', radius: 4.115, freq: 729, rpm: 393660, color: 0xff00ff, active: true, speed: 1.0 },
+            { name: 'Shell 7', radius: 4.558, freq: 2187, rpm: 1180980, color: 0xff0099, active: true, speed: 1.0 }
+        ];
+        
+        // Visualization toggles
+        let vizToggles = {
+            energy: true,
+            freq: true,
+            plasma: true,
+            particles: true,
+            resonance: true
+        };
+        
+        function init3D() {
+            const canvas = document.getElementById('canvas3d');
+            const width = canvas.clientWidth;
+            const height = 750;
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a14);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(12, 7, 12);
+            camera.lookAt(0, 0, 0);
+            
+            // Renderer with higher quality
+            renderer = new THREE.WebGLRenderer({ 
+                canvas, 
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Enhanced lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+            
+            const pointLight1 = new THREE.PointLight(0x00ffff, 2, 100);
+            pointLight1.position.set(15, 15, 15);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0xff00ff, 2, 100);
+            pointLight2.position.set(-15, -15, -15);
+            scene.add(pointLight2);
+            
+            const pointLight3 = new THREE.PointLight(0xffff00, 1.5, 50);
+            pointLight3.position.set(0, 20, 0);
+            scene.add(pointLight3);
+            
+            // Plasma core with enhanced definition (multiple layers)
+            const torusGeometry = new THREE.TorusGeometry(1, 0.382, 64, 128);
+            const plasmaMaterial = new THREE.MeshStandardMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.8,
+                transparent: true,
+                opacity: 0.9,
+                metalness: 0.3,
+                roughness: 0.3
+            });
+            plasmaCore = new THREE.Mesh(torusGeometry, plasmaMaterial);
+            scene.add(plasmaCore);
+            
+            // Add inner plasma vortex layer (more intense)
+            const innerTorusGeometry = new THREE.TorusGeometry(0.9, 0.3, 32, 64);
+            const innerPlasmaMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff00ff,
+                transparent: true,
+                opacity: 0.6
+            });
+            const innerPlasma = new THREE.Mesh(innerTorusGeometry, innerPlasmaMaterial);
+            plasmaCore.add(innerPlasma);
+            
+            // Add outer plasma glow layer
+            const outerTorusGeometry = new THREE.TorusGeometry(1.1, 0.4, 32, 64);
+            const outerPlasmaMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide
+            });
+            const outerPlasma = new THREE.Mesh(outerTorusGeometry, outerPlasmaMaterial);
+            plasmaCore.add(outerPlasma);
+            
+            // Add vortex lines inside plasma
+            createPlasmaVortexLines();
+            
+            // Create shells (higher resolution)
+            shellConfig.forEach((config, i) => {
+                const shellGeometry = new THREE.SphereGeometry(config.radius, 64, 64);
+                const shellMaterial = new THREE.MeshStandardMaterial({
+                    color: config.color,
+                    transparent: true,
+                    opacity: 0.15,
+                    wireframe: true,
+                    side: THREE.DoubleSide,
+                    metalness: 0.5,
+                    roughness: 0.5
+                });
+                const shell = new THREE.Mesh(shellGeometry, shellMaterial);
+                shell.userData = { ...config, index: i };
+                shell.userData.rotationSpeed = (i % 2 === 0 ? 1 : -1) * (0.001 + i * 0.0005);
+                shells.push(shell);
+                scene.add(shell);
+            });
+            
+            // Create emitters (higher count for detail)
+            const icosahedronPositions = [
+                [0, 1, 0], [0.894, 0.447, 0], [0.276, 0.447, 0.851],
+                [-0.724, 0.447, 0.526], [-0.724, 0.447, -0.526],
+                [0.276, 0.447, -0.851], [0.724, -0.447, 0.526],
+                [0.724, -0.447, -0.526], [-0.276, -0.447, 0.851],
+                [-0.894, -0.447, 0], [-0.276, -0.447, -0.851],
+                [0, -1, 0]
+            ];
+            
+            shellConfig.forEach((config, shellIndex) => {
+                const emitterGroup = new THREE.Group();
+                icosahedronPositions.forEach((pos, emitterIndex) => {
+                    const emitterGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+                    const emitterMaterial = new THREE.MeshBasicMaterial({ 
+                        color: 0xffff00,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+                    const emitter = new THREE.Mesh(emitterGeometry, emitterMaterial);
+                    emitter.position.set(
+                        pos[0] * config.radius,
+                        pos[1] * config.radius,
+                        pos[2] * config.radius
+                    );
+                    emitterGroup.add(emitter);
+                    
+                    // Create energy beam
+                    createEnergyBeam(emitter.position.clone(), shellIndex);
+                });
+                emitters.push(emitterGroup);
+                scene.add(emitterGroup);
+            });
+            
+            // Create inter-shell resonance lines
+            createResonanceLines();
+            
+            // Create frequency waves
+            createFrequencyWaves();
+            
+            // Create plasma streams
+            createPlasmaStreams();
+            
+            // Create particles
+            createVacuumParticles();
+            
+            // Setup UI
+            setupShellControls();
+            setupFrequencyDisplay();
+            setupMouseControls();
+            
+            // Start animation
+            animate();
+        }
+        
+        function createEnergyBeam(startPos, shellIndex) {
+            const points = [];
+            const steps = 30;
+            
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const curve = Math.sin(t * Math.PI) * 0.1;
+                points.push(new THREE.Vector3(
+                    startPos.x * (1 - t) + curve,
+                    startPos.y * (1 - t),
+                    startPos.z * (1 - t) + curve
+                ));
+            }
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.7
+            });
+            
+            const beam = new THREE.Line(geometry, material);
+            beam.userData = { shellIndex, phaseOffset: Math.random() * Math.PI * 2 };
+            energyBeams.push(beam);
+            scene.add(beam);
+        }
+        
+        function createPlasmaVortexLines() {
+            // Create magnetic field lines inside plasma torus
+            for (let i = 0; i < 12; i++) {
+                const points = [];
+                const angle = (i / 12) * Math.PI * 2;
+                const segments = 100;
+                
+                for (let j = 0; j < segments; j++) {
+                    const t = (j / segments) * Math.PI * 2;
+                    const r = 1 + Math.cos(t) * 0.382;
+                    const x = Math.cos(angle + t * 3) * r;
+                    const y = Math.sin(t) * 0.382;
+                    const z = Math.sin(angle + t * 3) * r;
+                    
+                    points.push(new THREE.Vector3(x, y, z));
+                }
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0xff00ff,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                
+                const vortexLine = new THREE.Line(geometry, material);
+                plasmaCore.add(vortexLine);
+            }
+        }
+        
+        function createResonanceLines() {
+            for (let i = 0; i < shellConfig.length - 1; i++) {
+                const points = [];
+                const segments = 50;
+                
+                for (let j = 0; j <= segments; j++) {
+                    const t = j / segments;
+                    const angle = t * Math.PI * 2;
+                    const r1 = shellConfig[i].radius;
+                    const r2 = shellConfig[i + 1].radius;
+                    const r = r1 + (r2 - r1) * 0.5;
+                    
+                    points.push(new THREE.Vector3(
+                        Math.cos(angle) * r,
+                        Math.sin(angle * 3) * 0.2,
+                        Math.sin(angle) * r
+                    ));
+                }
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: 0x00ffff,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                line.userData = { shellPair: i };
+                resonanceLines.push(line);
+                scene.add(line);
+            }
+        }
+        
+        function createFrequencyWaves() {
+            shellConfig.forEach((config, i) => {
+                const geometry = new THREE.TorusGeometry(config.radius, 0.03, 16, 100);
+                const material = new THREE.MeshBasicMaterial({
+                    color: config.color,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const wave = new THREE.Mesh(geometry, material);
+                wave.rotation.x = Math.PI / 2;
+                wave.userData = { speed: 0.5 + i * 0.2, shellIndex: i };
+                frequencyWaves.push(wave);
+                scene.add(wave);
+            });
+        }
+        
+        function createPlasmaStreams() {
+            const count = 300;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            
+            for (let i = 0; i < count; i++) {
+                const angle = (i / count) * Math.PI * 2;
+                const radius = 1 + Math.random() * 0.4;
+                const height = (Math.random() - 0.5) * 0.6;
+                
+                positions[i * 3] = Math.cos(angle) * radius;
+                positions[i * 3 + 1] = height;
+                positions[i * 3 + 2] = Math.sin(angle) * radius;
+                
+                colors[i * 3] = 1;
+                colors[i * 3 + 1] = 0;
+                colors[i * 3 + 2] = 1;
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.06,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const stream = new THREE.Points(geometry, material);
+            plasmaStreams.push(stream);
+            scene.add(stream);
+        }
+        
+        function createVacuumParticles() {
+            const count = 2000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const velocities = [];
+            
+            for (let i = 0; i < count; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 15;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 15;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+                
+                velocities.push({
+                    x: (Math.random() - 0.5) * 0.02,
+                    y: (Math.random() - 0.5) * 0.02,
+                    z: (Math.random() - 0.5) * 0.02
+                });
+            }
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const material = new THREE.PointsMaterial({
+                color: 0x00ff66,
+                size: 0.04,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const particleSystem = new THREE.Points(geometry, material);
+            particleSystem.userData.velocities = velocities;
+            particles.push(particleSystem);
+            scene.add(particleSystem);
+        }
+        
+        function setupShellControls() {
+            const container = document.getElementById('shellControls');
+            
+            shellConfig.forEach((config, i) => {
+                const control = document.createElement('div');
+                control.className = 'shell-control active';
+                control.innerHTML = `
+                    <div class="shell-header">
+                        <span class="shell-name">${config.name}</span>
+                        <button class="shell-toggle active" onclick="toggleShell(${i})">ON</button>
+                    </div>
+                    <div class="shell-data">
+                        <span class="shell-stat">Radius:</span>
+                        <span class="shell-value">${config.radius.toFixed(3)} m</span>
+                        <span class="shell-stat">Frequency:</span>
+                        <span class="shell-value">${config.freq} MHz</span>
+                        <span class="shell-stat">RPM:</span>
+                        <span class="shell-value" id="rpm-${i}">${config.rpm.toLocaleString()}</span>
+                        <span class="shell-stat">Speed:</span>
+                        <span class="shell-value" id="speed-${i}">100%</span>
+                    </div>
+                    <input type="range" class="shell-slider" min="0" max="200" value="100" 
+                           oninput="adjustShellSpeed(${i}, this.value)">
+                `;
+                container.appendChild(control);
+            });
+        }
+        
+        function setupFrequencyDisplay() {
+            const container = document.getElementById('frequencyDisplay');
+            
+            for (let i = 0; i < shellConfig.length - 1; i++) {
+                const freqDiff = shellConfig[i + 1].freq - shellConfig[i].freq;
+                const freqDiv = document.createElement('div');
+                freqDiv.className = 'freq-resonance';
+                freqDiv.innerHTML = `
+                    <div class="freq-label">
+                        <span class="freq-name">Shell ${i + 1} ↔ Shell ${i + 2}</span>
+                        <span class="freq-value">${freqDiff} MHz</span>
+                    </div>
+                    <div class="freq-bar">
+                        <div class="freq-fill" style="width: ${(i + 1) / 7 * 100}%"></div>
+                    </div>
+                    <div class="resonance-indicator active" id="res-${i}">⚡ RESONANCE LOCKED</div>
+                `;
+                container.appendChild(freqDiv);
+            }
+        }
+        
+        function setupMouseControls() {
+            const canvas = document.getElementById('canvas3d');
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            canvas.addEventListener('mousedown', () => isDragging = true);
+            canvas.addEventListener('mouseup', () => isDragging = false);
+            canvas.addEventListener('mouseleave', () => isDragging = false);
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaMove = {
+                        x: e.offsetX - previousMousePosition.x,
+                        y: e.offsetY - previousMousePosition.y
+                    };
+                    scene.rotation.y += deltaMove.x * 0.01;
+                    scene.rotation.x += deltaMove.y * 0.01;
+                }
+                previousMousePosition = { x: e.offsetX, y: e.offsetY };
+            });
+            
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                camera.position.z += e.deltaY * 0.01;
+                camera.position.z = Math.max(5, Math.min(30, camera.position.z));
+            });
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Rotate core
+            plasmaCore.rotation.x += rotationSpeed;
+            plasmaCore.rotation.y += rotationSpeed * 1.5;
+            
+            // Rotate shells
+            shells.forEach((shell, i) => {
+                if (shellConfig[i].active) {
+                    const speed = shell.userData.rotationSpeed * rotationSpeed * 1000 * shellConfig[i].speed;
+                    shell.rotation.y += speed;
+                    shell.rotation.z += speed * 0.5;
+                }
+            });
+            
+            // Animate emitters
+            emitters.forEach((group, i) => {
+                if (shellConfig[i].active) {
+                    group.rotation.y = time * (i % 2 === 0 ? 1 : -1) * 0.3;
+                }
+            });
+            
+            // Animate energy beams
+            if (vizToggles.energy) {
+                energyBeams.forEach(beam => {
+                    const pulse = Math.sin(time * 3 + beam.userData.phaseOffset) * 0.3 + 0.7;
+                    beam.material.opacity = pulse;
+                });
+            }
+            
+            // Animate frequency waves
+            if (vizToggles.freq) {
+                frequencyWaves.forEach(wave => {
+                    const expand = Math.sin(time * wave.userData.speed) * 0.15 + 1;
+                    wave.scale.set(expand, expand, expand);
+                });
+            }
+            
+            // Animate plasma
+            if (vizToggles.plasma) {
+                plasmaStreams.forEach(stream => {
+                    stream.rotation.y += 0.01;
+                    const positions = stream.geometry.attributes.position.array;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const angle = Math.atan2(positions[i + 2], positions[i]);
+                        const radius = Math.sqrt(positions[i] ** 2 + positions[i + 2] ** 2);
+                        const newAngle = angle + 0.015;
+                        
+                        positions[i] = Math.cos(newAngle) * radius;
+                        positions[i + 2] = Math.sin(newAngle) * radius;
+                    }
+                    
+                    stream.geometry.attributes.position.needsUpdate = true;
+                });
+            }
+            
+            // Animate particles
+            if (vizToggles.particles) {
+                particles.forEach(particleSystem => {
+                    const positions = particleSystem.geometry.attributes.position.array;
+                    const velocities = particleSystem.userData.velocities;
+                    
+                    for (let i = 0; i < positions.length; i += 3) {
+                        const dx = -positions[i] * 0.01;
+                        const dy = -positions[i + 1] * 0.01;
+                        const dz = -positions[i + 2] * 0.01;
+                        
+                        positions[i] += velocities[i / 3].x + dx;
+                        positions[i + 1] += velocities[i / 3].y + dy;
+                        positions[i + 2] += velocities[i / 3].z + dz;
+                        
+                        const dist = Math.sqrt(positions[i] ** 2 + positions[i + 1] ** 2 + positions[i + 2] ** 2);
+                        if (dist < 0.5) {
+                            positions[i] = (Math.random() - 0.5) * 15;
+                            positions[i + 1] = (Math.random() - 0.5) * 15;
+                            positions[i + 2] = (Math.random() - 0.5) * 15;
+                        }
+                    }
+                    
+                    particleSystem.geometry.attributes.position.needsUpdate = true;
+                });
+            }
+            
+            // Animate resonance lines
+            if (vizToggles.resonance) {
+                resonanceLines.forEach(line => {
+                    line.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Control functions
+        window.toggleShell = function(index) {
+            shellConfig[index].active = !shellConfig[index].active;
+            const btn = document.querySelectorAll('.shell-toggle')[index];
+            const control = document.querySelectorAll('.shell-control')[index];
+            
+            if (shellConfig[index].active) {
+                btn.textContent = 'ON';
+                btn.classList.add('active');
+                control.classList.add('active');
+                shells[index].visible = true;
+                emitters[index].visible = true;
+            } else {
+                btn.textContent = 'OFF';
+                btn.classList.remove('active');
+                control.classList.remove('active');
+                shells[index].visible = false;
+                emitters[index].visible = false;
+            }
+            
+            updateActiveShellsCount();
+        };
+        
+        window.adjustShellSpeed = function(index, value) {
+            shellConfig[index].speed = value / 100;
+            document.getElementById(`speed-${index}`).textContent = value + '%';
+            const newRPM = Math.round(shellConfig[index].rpm * shellConfig[index].speed);
+            document.getElementById(`rpm-${index}`).textContent = newRPM.toLocaleString();
+        };
+        
+        window.activateAllShells = function() {
+            shellConfig.forEach((config, i) => {
+                config.active = true;
+                shells[i].visible = true;
+                emitters[i].visible = true;
+            });
+            document.querySelectorAll('.shell-toggle').forEach(btn => {
+                btn.textContent = 'ON';
+                btn.classList.add('active');
+            });
+            document.querySelectorAll('.shell-control').forEach(ctrl => ctrl.classList.add('active'));
+            updateActiveShellsCount();
+        };
+        
+        window.deactivateAllShells = function() {
+            shellConfig.forEach((config, i) => {
+                config.active = false;
+                shells[i].visible = false;
+                emitters[i].visible = false;
+            });
+            document.querySelectorAll('.shell-toggle').forEach(btn => {
+                btn.textContent = 'OFF';
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.shell-control').forEach(ctrl => ctrl.classList.remove('active'));
+            updateActiveShellsCount();
+        };
+        
+        window.syncShells = function() {
+            shellConfig.forEach((config, i) => {
+                document.querySelectorAll('.shell-slider')[i].value = 100;
+                config.speed = 1.0;
+                document.getElementById(`speed-${i}`).textContent = '100%';
+                document.getElementById(`rpm-${i}`).textContent = config.rpm.toLocaleString();
+            });
+            document.getElementById('phaseSync').textContent = '±0.1°';
+            setTimeout(() => {
+                document.getElementById('phaseSync').textContent = '±0.3°';
+            }, 2000);
+        };
+        
+        window.toggleViz = function(type) {
+            vizToggles[type] = !vizToggles[type];
+            const checkbox = document.getElementById(`viz-${type}`);
+            checkbox.classList.toggle('checked');
+            
+            switch(type) {
+                case 'energy':
+                    energyBeams.forEach(b => b.visible = vizToggles[type]);
+                    break;
+                case 'freq':
+                    frequencyWaves.forEach(w => w.visible = vizToggles[type]);
+                    break;
+                case 'plasma':
+                    plasmaStreams.forEach(s => s.visible = vizToggles[type]);
+                    break;
+                case 'particles':
+                    particles.forEach(p => p.visible = vizToggles[type]);
+                    break;
+                case 'resonance':
+                    resonanceLines.forEach(l => l.visible = vizToggles[type]);
+                    break;
+            }
+        };
+        
+        window.handleStart = function() {
+            const btn = document.getElementById('startBtn');
+            btn.classList.add('running');
+            rotationSpeed = 0.003;
+            document.getElementById('wormholeStatus').textContent = 'CHARGING';
+            setTimeout(() => {
+                btn.classList.remove('running');
+                document.getElementById('wormholeStatus').textContent = 'READY';
+            }, 5000);
+        };
+        
+        window.handleNucleate = function() {
+            const btn = document.getElementById('nucleateBtn');
+            btn.classList.add('running');
+            rotationSpeed = 0.01;
+            plasmaCore.material.color.setHex(0xff00ff);
+            plasmaCore.material.emissive.setHex(0xff00ff);
+            document.getElementById('wormholeStatus').textContent = 'ACTIVE';
+            setTimeout(() => {
+                btn.classList.remove('running');
+            }, 3000);
+        };
+        
+        window.handleShutdown = function() {
+            document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('running'));
+            rotationSpeed = 0.001;
+            plasmaCore.material.color.setHex(0x00ffff);
+            plasmaCore.material.emissive.setHex(0x00ffff);
+            document.getElementById('wormholeStatus').textContent = 'STANDBY';
+        };
+        
+        function updateActiveShellsCount() {
+            const active = shellConfig.filter(c => c.active).length;
+            document.getElementById('activeShells').textContent = `${active}/7`;
+        }
+        
+        // Initialize
+        window.addEventListener('load', init3D);
+        
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('canvas3d');
+            const width = canvas.clientWidth;
+            camera.aspect = width / 750;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, 750);
+        });
+    </script>
+</body>
+</html>
