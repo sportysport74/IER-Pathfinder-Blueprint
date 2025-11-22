@@ -1,0 +1,774 @@
+# TEST 0: CYMATIC BOGOLIUBOV CASCADE
+## Quick-Start Experimental Guide
+
+**Cost**: $10,000  
+**Duration**: 3 months  
+**Difficulty**: Undergraduate physics lab level  
+**Purpose**: Validate core mechanism before expensive quantum tests
+
+---
+
+## EXECUTIVE SUMMARY
+
+This experiment tests whether **synchronized frequency sources create stable central nodes with energy amplification** - the fundamental principle underlying both AQD and IER frameworks.
+
+**If this fails, the entire propulsion concept is wrong. Save $8.56M.**  
+**If this succeeds, confidence jumps to 50%. Proceed to quantum tests.**
+
+---
+
+## SHOPPING LIST ($4,000 Equipment)
+
+### Acoustic Transducers (15 units)
+- **Part**: Electro-Voice 309A horn drivers (or equivalent)
+- **Specs**: 100 Hz - 10 kHz response, 30W continuous
+- **Cost**: $100 × 15 = $1,500
+- **Source**: Parts Express, B&H Photo, or eBay
+
+### Signal Generator
+- **Part**: Rigol DG4162 function generator
+- **Specs**: 2-channel, 160 MHz, arbitrary waveform
+- **Cost**: $1,200 (or rent for $300/month)
+- **Source**: Tektronix, Rigol dealers
+
+### Amplifiers (3 units, each drives 5 speakers)
+- **Part**: Crown XLS1002 power amplifier
+- **Specs**: 350W @ 4Ω per channel
+- **Cost**: $350 × 3 = $1,050
+- **Source**: Sweetwater, Guitar Center
+
+### Pressure Sensors (5 units)
+- **Part**: Honeywell 40PC series
+- **Specs**: ±15 PSI, 1 kHz bandwidth
+- **Cost**: $80 × 5 = $400
+- **Source**: Digi-Key, Mouser
+
+### Data Acquisition
+- **Part**: National Instruments USB-6212 DAQ
+- **Specs**: 16 analog inputs, 400 kS/s
+- **Cost**: $650
+- **Source**: NI.com or lab surplus
+
+### High-Speed Camera (rental)
+- **Part**: Photron FastCam Mini AX50
+- **Specs**: 10,000 fps @ 512×512
+- **Cost**: $1,500/month rental (or borrow from university)
+- **Source**: AbelCine, camera rental houses
+
+### Structural Materials
+- Aluminum angle (15 pieces, 1m long): $150
+- PVC pipe (15mm diameter, 10m total): $50
+- Mounting hardware (brackets, screws): $100
+- Tank (acrylic, 60cm diameter × 40cm deep): $300
+- Water pump & filtration: $100
+
+**Total Equipment**: ~$4,000 (plus tax/shipping)
+
+---
+
+## DATA ACQUISITION SYSTEM ($2,500)
+
+### Hardware
+```
+National Instruments USB-6212 DAQ:          $650
+Pressure sensor signal conditioning:       $400
+LabVIEW software license (student/edu):    $300
+Computer (if needed, used laptop OK):      $800
+Cables, connectors, breadboards:           $350
+                                          ──────
+Total:                                    $2,500
+```
+
+### Software (Free Alternatives)
+- **Arduino + Python**: Free, slower sample rate but adequate
+- **Audacity**: Free audio analysis software
+- **MATLAB student edition**: $50/year
+
+---
+
+## HIGH-SPEED IMAGING ($1,500)
+
+### Options
+
+**Option A: Rent Professional Camera**
+- Photron FastCam: $1,500/month
+- Best quality, but expensive
+
+**Option B: Use Phone/Consumer Camera**
+- iPhone 15 Pro: 240 fps (probably sufficient)
+- Free if you own one
+- Adequate for proof-of-concept
+
+**Option C: Borrow from University**
+- Most physics departments have high-speed cameras
+- Free if available
+
+**Recommendation**: Start with phone, upgrade if needed.
+
+---
+
+## PERSONNEL COSTS ($1,500)
+
+- **1 Graduate Student**: $1,500/month × 1 month hands-on
+- **Faculty advisor**: In-kind (supervision, 2 hrs/week)
+- **Undergraduate assistants**: 2 students, volunteer or course credit
+
+**Or**: Do it yourself if you have physics background!
+
+---
+
+## FACILITY REQUIREMENTS ($500)
+
+### Space
+- 10m × 10m room (basement, garage, warehouse)
+- Sink or water source nearby
+- Electrical: 110V, 20A circuit (standard outlet)
+- Sound isolation helpful but not required
+
+### Safety
+- Ear protection (loud! 100+ dB at times)
+- Water spill containment (tarps, towels)
+- Electrical safety (GFCI outlets near water)
+
+### Rent/Fees
+- University lab space: Usually free for students/faculty
+- Maker space rental: $50-200/month
+- Home garage: Free!
+
+---
+
+## BUILD INSTRUCTIONS (Week 1-2)
+
+### Step 1: Build Speaker Array Frame
+
+**Materials**:
+- 15 aluminum angle pieces (1m long, 25mm × 25mm)
+- 1 circular ring (60cm diameter, aluminum or steel)
+- Mounting brackets (15)
+- Bolts & nuts (M6 size, 60 pieces)
+
+**Procedure**:
+```
+1. Mark 15 equally-spaced points on ring (360°/15 = 24°)
+2. Drill holes at marked points (6mm diameter)
+3. Attach aluminum angles vertically to ring (bolts + brackets)
+4. Mount speakers at top of each angle, facing inward 15° below horizontal
+5. Secure frame to table or floor (stability critical!)
+6. Total height: ~80cm above water surface
+```
+
+**Diagram**:
+```
+                  Speaker
+                    ↓ (15° inward angle)
+                   [ ]
+                    |  Aluminum angle (1m)
+                    |
+    ●━━━━━━━━━●━━━━●━━━━●━━━━━━━━━● Ring (60cm diameter)
+              24° spacing
+
+Center point is ~40cm above water surface
+```
+
+### Step 2: Install Sensors
+
+**Pressure Sensors** (5 units):
+```
+Sensor 1: Dead center (0 cm from axis)
+Sensor 2: 10 cm from center, at 0°
+Sensor 3: 20 cm from center, at 72°
+Sensor 4: 20 cm from center, at 144°
+Sensor 5: 20 cm from center, at 216°
+```
+
+Mount sensors on PVC pipe holders, submerge 5cm below water surface.
+
+**High-Speed Camera**:
+```
+Position: 2m from tank, aimed at center
+Height: Level with water surface
+Lighting: 2× 500W work lights from sides (no glare)
+Frame rate: 1000-10,000 fps
+Resolution: 512×512 minimum
+```
+
+### Step 3: Wire Electronics
+
+**Signal Flow**:
+```
+Function Generator (DG4162)
+    ↓ (BNC cables, 2 outputs)
+Splitter (1→15 fanout)
+    ↓ (15 × BNC to 1/4" adapters)
+Power Amplifiers (3 units, each drives 5 speakers)
+    ↓ (Speaker wire, 14 AWG)
+Horn Drivers (15 units)
+    ↓ (Acoustic output, aimed at center)
+Water Tank
+    ↓ (Pressure waves)
+Pressure Sensors (5 units)
+    ↓ (Analog voltage, 0-5V)
+DAQ (NI USB-6212)
+    ↓ (USB)
+Computer (LabVIEW or Python)
+```
+
+**Power**:
+```
+Amplifier 1: Speakers 1-5   (Outlet 1, left side)
+Amplifier 2: Speakers 6-10  (Outlet 2, right side)
+Amplifier 3: Speakers 11-15 (Outlet 3, back)
+
+IMPORTANT: Use separate circuits if possible to avoid ground loops!
+If single circuit: Add ferrite beads to power cords.
+```
+
+**Grounding**:
+```
+All equipment → Single ground point (star configuration)
+No ground loops! (test with multimeter: resistance between grounds <0.1Ω)
+```
+
+### Step 4: Calibration (Week 3)
+
+**Test Each Speaker Individually**:
+```
+1. Disable all but speaker #1
+2. Generate 1 kHz sine wave, 10V amplitude
+3. Measure output with sensor at center
+4. Record amplitude & phase
+5. Repeat for speakers 2-15
+6. Adjust amplifier gains so all outputs ±5% matched
+```
+
+**Phase Calibration**:
+```
+1. Enable all speakers
+2. Generate synchronized 1 kHz pulse (1 cycle)
+3. Camera records wavefront arrival at center
+4. Measure time delay for each speaker
+5. Adjust signal generator phase offsets to compensate
+6. Goal: All wavefronts arrive within ±10 μs (±3.6° at 1 kHz)
+```
+
+**This is the MOST CRITICAL step. Poor phase matching = no node formation!**
+
+---
+
+## EXPERIMENTAL PROTOCOL (Week 4-8)
+
+### Experiment 1: Baseline (No Synchronization)
+
+**Goal**: Establish baseline noise floor
+
+**Procedure**:
+```
+1. Fill tank with water (40 L, room temperature)
+2. Start data acquisition (10 kHz sample rate, all 5 sensors)
+3. Enable all 15 speakers, NO phase synchronization (random phases)
+4. Sweep frequency: 100 Hz → 3 kHz, 10 Hz/second sweep rate
+5. Record for 5 minutes
+6. Repeat 10 times (50 minutes total data)
+```
+
+**Expected Result**: Chaotic interference, no stable node, low central amplitude
+
+**Analysis**:
+```
+FFT of center sensor signal → Measure noise floor
+Typical: -60 dB below single-speaker level
+```
+
+### Experiment 2: Synchronized Pulse (Single Frequency)
+
+**Goal**: Demonstrate stable node formation
+
+**Procedure**:
+```
+1. Empty tank, refill (fresh water, no bubbles)
+2. Enable all 15 speakers with phase synchronization
+3. Generate 1 kHz sine wave, duration 10 cycles (10 ms burst)
+4. Repeat burst every 100 ms (10 Hz rep rate)
+5. Camera records at 10,000 fps
+6. Data acquisition at 100 kHz (oversampling)
+7. Run for 1 minute (600 bursts total)
+8. Repeat at: 300 Hz, 500 Hz, 1 kHz, 1.5 kHz, 2 kHz, 3 kHz
+```
+
+**Expected Result**: Stable node at center, amplitude >10× baseline, radius ≈ λ/(2n)
+
+**Success Criteria**:
+```
+✓ Central amplitude > 10× single speaker
+✓ Node lifetime > 1 second (decays slowly)
+✓ Node radius = λ/(2×15) ± 50%
+  (For 1 kHz in water: λ = 1.5 m, r_node = 5 cm)
+✓ Repeatability: >90% of bursts show node
+```
+
+### Experiment 3: Frequency Ladder (3^n Progression)
+
+**Goal**: Test harmonic resonance prediction
+
+**Procedure**:
+```
+1. Test frequencies: f_n = 100 × 3^n Hz
+   - f_0 = 100 Hz
+   - f_1 = 300 Hz
+   - f_2 = 900 Hz
+   - f_3 = 2.7 kHz
+   
+2. For each frequency:
+   - 10-cycle burst, repeated 100 times
+   - Measure central amplitude & node radius
+   
+3. Plot: Amplitude vs. Frequency
+```
+
+**Expected Result**: Peaks at 3^n harmonics (100, 300, 900, 2700 Hz)
+
+**Success Criteria**:
+```
+✓ Peaks appear at predicted frequencies ±10%
+✓ Peak height ratio: A(3f) / A(2f) > 2×
+  (Harmonic resonance should amplify 3^n more than arbitrary f)
+```
+
+### Experiment 4: Phase Sensitivity
+
+**Goal**: Confirm Φ-phase optimization
+
+**Procedure**:
+```
+1. Fix frequency at 1 kHz
+2. Vary phase offset between adjacent speakers:
+   - Δφ = 0° (synchronized)
+   - Δφ = 12° (Φ-optimized: 360°/(15×Φ) ≈ 14.9°, use 12° for simplicity)
+   - Δφ = 24° (uniform: 360°/15)
+   - Δφ = 36°
+   - Δφ = 72°
+   
+3. For each Δφ:
+   - 100 bursts
+   - Measure central amplitude
+   
+4. Plot: Amplitude vs. Δφ
+```
+
+**Expected Result**: Maximum at Δφ ≈ 0° and 12-15° (Φ-optimized)
+
+**Success Criteria**:
+```
+✓ A(Δφ=0°) > A(Δφ=36°) by factor >3×
+✓ A(Δφ=12°) ≈ A(Δφ=0°) within 20%
+  (Φ-optimization should be nearly as good as perfect sync)
+```
+
+### Experiment 5: Time-Resolved Node Dynamics
+
+**Goal**: Measure node formation time & stability
+
+**Procedure**:
+```
+1. Single 1 kHz burst, 50 cycles (50 ms)
+2. High-speed camera at 10,000 fps
+3. Track node position & amplitude frame-by-frame
+4. Measure:
+   - Formation time (t_form): When amplitude >5× baseline
+   - Peak time (t_peak): Maximum amplitude
+   - Decay time (t_decay): When amplitude <2× baseline
+```
+
+**Expected Result**:
+```
+t_form ≈ 5 ms (5 cycles to establish)
+t_peak ≈ 25 ms (halfway through burst)
+t_decay ≈ 100 ms (persists 2× burst duration)
+```
+
+---
+
+## DATA ANALYSIS (Week 9-12)
+
+### Analysis 1: Central Amplitude vs. Frequency
+
+**Code (Python)**:
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import signal
+
+# Load data
+data = np.loadtxt('experiment2_1kHz.txt')
+time = data[:, 0]
+pressure_center = data[:, 1]  # Sensor 1 (center)
+
+# FFT to find dominant frequency
+fft = np.fft.fft(pressure_center)
+freqs = np.fft.fftfreq(len(time), d=time[1]-time[0])
+dominant_freq = freqs[np.argmax(np.abs(fft))]
+
+# Envelope detection
+analytic_signal = signal.hilbert(pressure_center)
+amplitude_envelope = np.abs(analytic_signal)
+
+# Peak amplitude
+A_peak = np.max(amplitude_envelope)
+
+# Baseline (Experiment 1, no sync)
+baseline_data = np.loadtxt('experiment1_baseline.txt')
+A_baseline = np.std(baseline_data[:, 1])
+
+# Amplification factor
+amplification = A_peak / A_baseline
+
+print(f"Dominant frequency: {dominant_freq:.1f} Hz")
+print(f"Peak amplitude: {A_peak:.3f} Pa")
+print(f"Baseline noise: {A_baseline:.3f} Pa")
+print(f"Amplification factor: {amplification:.1f}×")
+
+# Success criterion: amplification > 10×
+if amplification > 10:
+    print("✓ SUCCESS: Node formation confirmed!")
+else:
+    print("✗ FAIL: Insufficient amplification")
+```
+
+### Analysis 2: Node Radius Measurement
+
+**Code (Python with OpenCV)**:
+```python
+import cv2
+import numpy as np
+
+# Load high-speed video
+cap = cv2.VideoCapture('experiment2_1kHz_10000fps.mp4')
+
+# Find frame with maximum brightness (peak amplitude)
+max_brightness = 0
+peak_frame_idx = 0
+frame_idx = 0
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+    brightness = np.mean(frame)
+    if brightness > max_brightness:
+        max_brightness = brightness
+        peak_frame_idx = frame_idx
+    frame_idx += 1
+
+# Go to peak frame
+cap.set(cv2.CAP_PROP_POS_FRAMES, peak_frame_idx)
+ret, peak_frame = cap.read()
+
+# Convert to grayscale
+gray = cv2.cvtColor(peak_frame, cv2.COLOR_BGR2GRAY)
+
+# Threshold to find bright region (node)
+_, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+
+# Find contours
+contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Largest contour = node
+largest_contour = max(contours, key=cv2.contourArea)
+
+# Fit circle
+(x, y), radius_pixels = cv2.minEnclosingCircle(largest_contour)
+
+# Convert pixels to cm (calibration: measure tank diameter in frame)
+tank_diameter_pixels = 800  # Measured from frame
+tank_diameter_cm = 60  # Known physical size
+pixels_per_cm = tank_diameter_pixels / tank_diameter_cm
+
+radius_cm = radius_pixels / pixels_per_cm
+
+# Theoretical prediction
+frequency = 1000  # Hz
+speed_of_sound = 1500  # m/s in water
+wavelength = speed_of_sound / frequency  # 1.5 m = 150 cm
+n_sources = 15
+r_node_theory = (wavelength / (2 * n_sources)) * 100  # Convert to cm = 5 cm
+
+# Compare
+error = abs(radius_cm - r_node_theory) / r_node_theory * 100
+
+print(f"Measured node radius: {radius_cm:.2f} cm")
+print(f"Theoretical radius: {r_node_theory:.2f} cm")
+print(f"Error: {error:.1f}%")
+
+if error < 50:
+    print("✓ SUCCESS: Node radius matches theory within 50%!")
+else:
+    print("✗ FAIL: Node radius off by >50%")
+```
+
+### Analysis 3: Frequency Ladder Peaks
+
+**Code (Python)**:
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
+
+# Load Experiment 3 data (multiple frequencies)
+frequencies = [100, 200, 300, 500, 900, 1000, 1500, 2000, 2700, 3000]
+amplitudes = []
+
+for f in frequencies:
+    data = np.loadtxt(f'experiment3_{f}Hz.txt')
+    pressure = data[:, 1]  # Center sensor
+    A = np.max(np.abs(signal.hilbert(pressure)))
+    amplitudes.append(A)
+
+amplitudes = np.array(amplitudes)
+
+# Find peaks
+peaks, _ = find_peaks(amplitudes, height=np.mean(amplitudes)*1.5)
+
+# Expected peaks: 100, 300, 900, 2700 Hz (3^n series)
+expected_peaks = [100, 300, 900, 2700]
+detected_peaks = [frequencies[i] for i in peaks]
+
+# Check if expected peaks are present
+matches = [abs(detected - expected) < expected*0.1 
+           for expected in expected_peaks 
+           for detected in detected_peaks]
+
+success_rate = sum(matches) / len(expected_peaks)
+
+# Plot
+plt.figure(figsize=(10, 6))
+plt.plot(frequencies, amplitudes, 'b-o', label='Measured')
+plt.plot([frequencies[i] for i in peaks], [amplitudes[i] for i in peaks], 
+         'r*', markersize=15, label='Detected Peaks')
+for f in expected_peaks:
+    plt.axvline(f, color='g', linestyle='--', alpha=0.5)
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Central Amplitude (Pa)')
+plt.title('Frequency Ladder Response')
+plt.legend()
+plt.grid(True)
+plt.savefig('frequency_ladder_result.png', dpi=300)
+
+print(f"Expected peaks: {expected_peaks}")
+print(f"Detected peaks: {detected_peaks}")
+print(f"Match rate: {success_rate*100:.0f}%")
+
+if success_rate >= 0.75:
+    print("✓ SUCCESS: 3^n harmonics confirmed!")
+else:
+    print("✗ FAIL: Harmonic structure not as predicted")
+```
+
+---
+
+## SUCCESS/FAILURE CRITERIA
+
+### Minimum Success (Proceed to Test 1)
+
+Must meet **3 of 5** criteria:
+
+1. ✓ Central amplitude >10× baseline (Experiment 2)
+2. ✓ Node radius = λ/(2n) ± 50% (Experiment 2)  
+3. ✓ Frequency peaks at 3^n harmonics (Experiment 3)
+4. ✓ Phase sensitivity: max at Δφ≈0° (Experiment 4)
+5. ✓ Node lifetime >1 second (Experiment 5)
+
+**If 3-5 criteria met**: ✅ **PASS** → Continue to Test 1 ($50K)  
+**If <3 criteria met**: ❌ **FAIL** → Mechanism disproven, STOP
+
+### Strong Success (Accelerate to Test 2)
+
+Must meet **all 5** criteria above PLUS:
+
+6. ✓ Amplification factor >20× (not just >10×)
+7. ✓ Φ-phase optimization measurably better than uniform
+8. ✓ Node stability >10 seconds
+9. ✓ Repeatability >95% (not just >90%)
+
+**If 8-9 criteria met**: 🚀 **STRONG PASS** → Skip Test 1, fast-track to Test 2
+
+---
+
+## TROUBLESHOOTING
+
+### Problem: No node forms (chaotic interference)
+
+**Possible causes**:
+1. Phase calibration wrong
+   - **Fix**: Redo Step 4 calibration with oscilloscope
+2. Speakers not matched
+   - **Fix**: Individual amplitude calibration, replace mismatched units
+3. Room acoustics interfere
+   - **Fix**: Add sound-absorbing foam on walls
+
+### Problem: Node forms but amplitude <10× baseline
+
+**Possible causes**:
+1. Water temperature varying (affects speed of sound)
+   - **Fix**: Temperature-controlled tank (add aquarium heater)
+2. Bubbles in water (scatter sound)
+   - **Fix**: Degas water (boil then cool, or use vacuum pump)
+3. Sensor placement wrong
+   - **Fix**: Move sensors to exact center (±5mm accuracy needed)
+
+### Problem: Node radius doesn't match theory
+
+**Possible causes**:
+1. Frequency measurement wrong
+   - **Fix**: Use calibrated function generator (±0.1% accuracy)
+2. Speed of sound assumption wrong
+   - **Fix**: Measure directly (pulse-echo method)
+3. N_sources effectively <15 (some speakers out of phase)
+   - **Fix**: Check phase of each speaker with oscilloscope
+
+### Problem: No 3^n harmonic peaks
+
+**Possible causes**:
+1. Frequency steps too large
+   - **Fix**: Test at f = 100, 300, 900 Hz EXACTLY
+2. Nonlinear effects (distortion)
+   - **Fix**: Reduce amplitude (stay linear regime)
+3. Room resonances masking signal
+   - **Fix**: Outdoor experiment or large anechoic space
+
+---
+
+## SAFETY PRECAUTIONS
+
+### Acoustic
+- ⚠️ Sound levels can exceed 100 dB
+- **Required**: Ear protection (foam plugs + over-ear muffs)
+- **Limit**: <1 hour/day exposure at full power
+- **Distance**: Stay >2m from speakers when active
+
+### Electrical
+- ⚠️ Water + high-voltage amplifiers = electrocution risk
+- **Required**: GFCI outlets (test monthly)
+- **Grounding**: All metal parts bonded to earth ground
+- **Isolation**: Sensors use isolated power supplies (battery preferred)
+
+### Water
+- ⚠️ 40L water spill = slipping hazard + equipment damage
+- **Required**: Secondary containment (tarp under tank)
+- **Drainage**: Plan for emergency drain (siphon or pump)
+
+### Fire
+- ⚠️ Amplifiers can overheat
+- **Required**: Thermal fuses on each amp
+- **Ventilation**: Fans, don't block cooling vents
+- **Fire extinguisher**: Class C electrical (CO₂ or dry chemical)
+
+---
+
+## REPORTING RESULTS
+
+### Data Package
+
+Submit to funding agency:
+
+1. **Experimental Report** (10-20 pages):
+   - Methods
+   - Results (all 5 experiments)
+   - Analysis & plots
+   - Success/failure assessment
+
+2. **Raw Data** (upload to repository):
+   - All sensor data (.txt files)
+   - Videos (.mp4)
+   - Analysis code (Python scripts)
+   - Equipment calibration logs
+
+3. **Photos**:
+   - Setup (multiple angles)
+   - Node formation (high-speed stills)
+   - Sensor installation
+
+4. **Recommendation**:
+   - **If pass**: Request Test 1 funding ($50K)
+   - **If fail**: Detailed failure analysis + lessons learned
+
+### Publication
+
+**If successful**:
+- Submit to: *Physical Review Letters*, *Nature Physics*, or *Physics of Fluids*
+- Title: "Experimental Validation of Synchronized-Source Node Formation via Cymatic Analog"
+- Authors: [Your team] + Collaborators
+- Impact: Opens door to quantum tests
+
+**If unsuccessful**:
+- Submit to: *Negative Results in Physics* or equivalent
+- Title: "Null Result in Cymatic Bogoliubov Cascade Experiment"
+- Value: Saves others from pursuing this path
+
+---
+
+## TIMELINE SUMMARY
+
+**Week 1-2**: Build & assemble (~40 hours labor)  
+**Week 3**: Calibration & debugging (~20 hours)  
+**Week 4**: Experiment 1-2 (~10 hours data collection)  
+**Week 5**: Experiment 3-4 (~10 hours)  
+**Week 6**: Experiment 5 (~5 hours)  
+**Week 7-8**: Buffer for repeat runs & troubleshooting  
+**Week 9-12**: Data analysis & report writing
+
+**Total**: ~3 months part-time, or 1 month full-time
+
+---
+
+## NEXT STEPS IF SUCCESSFUL
+
+**Test 1: Magnetic Levitation Analog** ($50K, 6 months)
+- 15-source levitation system
+- Tests Φ-phase optimization with actual Casimir-like forces
+- Validates resonance lock concept
+
+**Test 2: Φ-Fractal Casimir Cavity** ($1.4M, 30 months)
+- Fabricate fractal surfaces via e-beam lithography
+- Measure Casimir enhancement factor
+- **CRITICAL**: Determines if energy budget closes
+
+---
+
+## CONTACT & SUPPORT
+
+**Questions?** Email research team: [TBD]  
+**Collaboration?** Contact host institution: [TBD]  
+**Replication?** Download full data package: [TBD]
+
+---
+
+## APPENDIX: EQUIPMENT ALTERNATIVES (Low-Budget)
+
+Can't afford $10K? Try this:
+
+### Super Low-Budget Version ($500)
+
+**Speakers**: 15× computer speakers ($10 each) = $150  
+**Signal Source**: Arduino Mega + audio shield = $50  
+**Amplifier**: Car audio amp (12V, 100W) = $40  
+**Sensors**: Piezo disks ($5 each × 5) = $25  
+**DAQ**: Arduino ADC (built-in)  
+**Camera**: Smartphone (you own)  
+**Tank**: Storage tub ($20)  
+**Misc**: Wire, PVC, brackets = $100
+
+**Total**: $385 + time
+
+**Tradeoffs**:
+- Lower quality, but might still work
+- Frequency range limited (500 Hz - 5 kHz)
+- Accuracy ±20% instead of ±5%
+- BUT: If node forms at all, that's success!
+
+**Many breakthrough experiments started in basements with minimal equipment.**
+
+---
+
+**Good luck! This experiment could change the world.** 🌌
+
+🚀 ✨ 🔬
