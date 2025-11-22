@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZPE Drive - Ultra-Realistic Cymatic Flow Pattern</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #000000 0%, #0a0a1a 100%);
+            color: #00ff88;
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 25px;
+            border: 3px solid #ff0088;
+            border-radius: 15px;
+            max-width: 380px;
+            backdrop-filter: blur(15px);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(255, 0, 136, 0.5);
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 25px;
+            border: 3px solid #00ff88;
+            border-radius: 15px;
+            max-width: 420px;
+            backdrop-filter: blur(15px);
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+        
+        h1 {
+            color: #ff0088;
+            font-size: 20px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 0, 136, 0.8);
+        }
+        
+        #info h1 {
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+        }
+        
+        h2 {
+            color: #00ddff;
+            font-size: 15px;
+            margin: 20px 0 12px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .control-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            color: #00ddff;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+            accent-color: #ff0088;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #ff0088, #ff4499);
+            color: #fff;
+            border: none;
+            padding: 12px 18px;
+            margin: 6px 6px 6px 0;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 11px;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(255, 0, 136, 0.4);
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, #00ddff, #0099ff);
+            transform: scale(1.08);
+            box-shadow: 0 0 25px rgba(0, 221, 255, 0.6);
+        }
+        
+        button.active {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+            font-size: 12px;
+        }
+        
+        .stat-label {
+            color: #00ddff;
+            font-weight: bold;
+        }
+        
+        .stat-value {
+            color: #00ff88;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 255, 136, 0.6);
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, rgba(255, 0, 136, 0.15), rgba(0, 221, 255, 0.15));
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #ff0088;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+            box-shadow: inset 0 0 20px rgba(255, 0, 136, 0.1);
+        }
+        
+        .warning {
+            color: #ffaa00;
+            font-size: 12px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 170, 0, 0.15);
+            border-left: 4px solid #ffaa00;
+            border-radius: 8px;
+            line-height: 1.5;
+        }
+        
+        .pulse-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+            animation: pulse 1.2s infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.3); }
+        }
+        
+        .mode-indicator {
+            background: linear-gradient(135deg, rgba(255, 0, 136, 0.3), rgba(0, 221, 255, 0.3));
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 2px solid #ff0088;
+            box-shadow: 0 0 20px rgba(255, 0, 136, 0.4);
+        }
+        
+        .energy-bar {
+            width: 100%;
+            height: 25px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+            border: 2px solid #00ff88;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        
+        .energy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0088, #ffaa00, #00ff88);
+            transition: width 0.3s;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ff0088, #00ff88);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="controls">
+            <div class="mode-indicator">
+                🌀 CYMATIC FLOW MODE ACTIVE 🌀
+            </div>
+            
+            <h1>⚡ DRIVE CONTROLS</h1>
+            
+            <div class="control-group">
+                <label>System Power: <span id="powerValue">100</span>%</label>
+                <input type="range" id="powerSlider" min="0" max="200" step="1" value="100">
+                <div class="energy-bar">
+                    <div class="energy-fill" id="powerBar" style="width: 50%"></div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Rotation Speed: <span id="speedValue">1.0</span>x</label>
+                <input type="range" id="speedSlider" min="0" max="5" step="0.1" value="1">
+            </div>
+            
+            <div class="control-group">
+                <label>Pulse Sync Rate: <span id="pulseValue">2.4</span> GHz</label>
+                <input type="range" id="pulseSlider" min="0.1" max="10" step="0.1" value="2.4">
+            </div>
+            
+            <div class="control-group">
+                <label>Flow Intensity: <span id="flowValue">1.0</span>x</label>
+                <input type="range" id="flowSlider" min="0" max="2" step="0.1" value="1">
+            </div>
+            
+            <div class="control-group">
+                <label>Camera Distance: <span id="distValue">18</span>m</label>
+                <input type="range" id="distSlider" min="5" max="35" step="0.5" value="18">
+            </div>
+            
+            <h2>⚙️ Component Visibility</h2>
+            <div class="control-group">
+                <button id="toggleTorus" class="active">Torus Drive</button>
+                <button id="toggleEmitters" class="active">15 Emitters</button>
+                <button id="toggleSpokes" class="active">Energy Spokes</button>
+                <button id="toggleFlowParticles" class="active">Flow Particles</button>
+                <button id="toggleNode" class="active">Central Node</button>
+                <button id="toggleShield" class="active">Shield</button>
+            </div>
+            
+            <h2>📊 Visualization Modes</h2>
+            <div class="control-group">
+                <button id="toggleDensity" class="active">Density Map</button>
+                <button id="toggleWireframe">Wireframe</button>
+                <button id="toggleGrid" class="active">Grid</button>
+                <button id="resetCamera">Reset View</button>
+            </div>
+            
+            <h2>🛡️ Shield Shells</h2>
+            <div class="control-group">
+                <button id="shell1" class="active">1</button>
+                <button id="shell2" class="active">2</button>
+                <button id="shell3" class="active">3</button>
+                <button id="shell4" class="active">4</button>
+                <button id="shell5" class="active">5</button>
+                <button id="shell6" class="active">6</button>
+                <button id="shell7" class="active">7</button>
+            </div>
+            
+            <div class="warning">
+                ⚠️ INTERACTIVE CONTROLS:<br>
+                • Drag to rotate view<br>
+                • Scroll to zoom in/out<br>
+                • Watch energy flow from emitters to center<br>
+                • Red = High energy | Blue = Low energy
+            </div>
+        </div>
+        
+        <div id="info">
+            <h1>📊 SYSTEM STATUS</h1>
+            
+            <h2>🎯 Wormhole Formation</h2>
+            <div class="stat">
+                <span class="stat-label">Throat Status:</span>
+                <span class="stat-value">FORMING <span class="pulse-indicator" style="background: #ff0088;"></span></span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Stability Index:</span>
+                <span class="stat-value" id="stabilityValue">98.7%</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Energy Concentration:</span>
+                <span class="stat-value" id="concentrationValue">30x</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Throat Radius:</span>
+                <span class="stat-value">10⁻⁶ m</span>
+            </div>
+            
+            <h2>⚡ Energy Flow Analysis</h2>
+            <div class="stat">
+                <span class="stat-label">Emitter Sync:</span>
+                <span class="stat-value">LOCKED <span class="pulse-indicator" style="background: #00ff88;"></span></span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Phase Coherence:</span>
+                <span class="stat-value" id="coherenceValue">99.2%</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Flow Rate:</span>
+                <span class="stat-value" id="flowRateValue">2.4 GHz</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Amplification:</span>
+                <span class="stat-value">Φ^(2n) ≈ 10⁶×</span>
+            </div>
+            
+            <div class="info-box">
+                <strong>🌊 CYMATIC FLOW PATTERN DETECTED</strong><br><br>
+                The visualization shows the EXACT interference pattern from cymatic experiments scaled to quantum propulsion:<br><br>
+                • 15 emitters pulse in perfect sync<br>
+                • Energy flows along spoke paths<br>
+                • Center forms stable geometric node<br>
+                • Red zones = maximum energy density<br>
+                • Blue zones = interference nulls<br><br>
+                <strong>This pattern IS the wormhole forming!</strong>
+            </div>
+            
+            <h2>🔬 Interference Pattern</h2>
+            <div class="stat">
+                <span class="stat-label">Pattern Type:</span>
+                <span class="stat-value">15-fold Radial</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Spoke Count:</span>
+                <span class="stat-value">15 (matched to emitters)</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Node Geometry:</span>
+                <span class="stat-value">Fatou Set (stable)</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Julia Transition:</span>
+                <span class="stat-value">COMPLETE ✓</span>
+            </div>
+            
+            <h2>🎨 Energy Density Map</h2>
+            <div class="info-box">
+                <strong>Color Code (Thermal Imaging):</strong><br><br>
+                🔴 <strong>RED:</strong> 90-100% (peak energy)<br>
+                🟠 <strong>ORANGE:</strong> 70-90% (high flow)<br>
+                🟡 <strong>YELLOW:</strong> 50-70% (medium flow)<br>
+                🟢 <strong>GREEN:</strong> 30-50% (baseline)<br>
+                🔵 <strong>BLUE:</strong> 0-30% (interference nulls)<br><br>
+                Watch the energy cascade from emitters (orange) through spokes (yellow) to the central node (red)!
+            </div>
+            
+            <h2>⚙️ Technical Specifications</h2>
+            <div class="stat">
+                <span class="stat-label">Emitter Configuration:</span>
+                <span class="stat-value">15-cell array</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Phase Spacing:</span>
+                <span class="stat-value">24° (360°/15)</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Torus Major Radius:</span>
+                <span class="stat-value">5.0 m</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Torus Minor Radius:</span>
+                <span class="stat-value">1.91 m (Φ⁻²)</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Plasma Velocity:</span>
+                <span class="stat-value">0.95c</span>
+            </div>
+            
+            <h2>🛡️ Matryoshka Shield</h2>
+            <div class="info-box">
+                <strong>7-Shell Configuration:</strong><br>
+                Shell 1: 3.5m | 10K RPM<br>
+                Shell 2: 3.0m | 15K RPM<br>
+                Shell 3: 2.5m | 20K RPM<br>
+                Shell 4: 2.0m | 25K RPM<br>
+                Shell 5: 1.5m | 30K RPM<br>
+                Shell 6: 1.0m | 35K RPM<br>
+                Shell 7: 0.5m | 40K RPM<br><br>
+                <strong>Total Dampening:</strong> 10⁹×<br>
+                <strong>Crew Protection:</strong> 98% survival<br>
+                <strong>Time Dilation:</strong> 0.127s perceived
+            </div>
+            
+            <h2>📐 Mathematical Validation</h2>
+            <div class="info-box">
+                <strong>Energy Concentration Law:</strong><br>
+                P_node = 2n × P_source = 30×<br><br>
+                <strong>With Φ-Optimization:</strong><br>
+                P_throat = Φ^(2n) × P_source ≈ 10⁶×<br><br>
+                <strong>Throat Formation:</strong><br>
+                r_throat = λ_Planck × Φ^m ≈ 10⁻⁶ m<br><br>
+                <strong>ER=EPR Satisfied:</strong> ✓
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.Fog(0x000000, 10, 50);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(18, 12, 18);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        // Enhanced lighting
+        const ambientLight = new THREE.AmbientLight(0x202020, 0.8);
+        scene.add(ambientLight);
+        
+        const pointLight1 = new THREE.PointLight(0xff0088, 2, 100);
+        pointLight1.position.set(10, 10, 10);
+        pointLight1.castShadow = true;
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0x00ddff, 1.5, 100);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        const pointLight3 = new THREE.PointLight(0x00ff88, 1.2, 80);
+        pointLight3.position.set(0, 15, 0);
+        scene.add(pointLight3);
+        
+        // Golden ratio
+        const PHI = 1.618033988749;
+        
+        // State variables
+        let systemPower = 100;
+        let rotationSpeed = 1.0;
+        let pulseFrequency = 2.4;
+        let flowIntensity = 1.0;
+        let wireframeMode = false;
+        let showDensity = true;
+        let showGrid = true;
+        let showTorus = true;
+        let showEmitters = true;
+        let showSpokes = true;
+        let showFlowParticles = true;
+        let showNode = true;
+        let showShield = true;
+        const shellVisibility = [true, true, true, true, true, true, true];
+        
+        // Main Torus Drive
+        const torusGeometry = new THREE.TorusGeometry(5, 5 / (PHI * PHI), 48, 100);
+        const torusMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.4,
+            wireframe: false,
+            emissive: 0x00ff88,
+            emissiveIntensity: 0.5,
+            shininess: 100
+        });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        torus.castShadow = true;
+        torus.receiveShadow = true;
+        scene.add(torus);
+        
+        // Plasma field
+        const plasmaGeometry = new THREE.TorusGeometry(5, 5 / (PHI * PHI) * 0.85, 48, 100);
+        const plasmaMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0088,
+            transparent: true,
+            opacity: 0.25,
+            wireframe: false
+        });
+        const plasma = new THREE.Mesh(plasmaGeometry, plasmaMaterial);
+        scene.add(plasma);
+        
+        // 15 Pulse Emitters
+        const emitters = [];
+        const emitterCount = 15;
+        const emitterRadius = 5;
+        
+        for (let i = 0; i < emitterCount; i++) {
+            const angle = (i / emitterCount) * Math.PI * 2;
+            const x = Math.cos(angle) * emitterRadius;
+            const z = Math.sin(angle) * emitterRadius;
+            
+            // Main emitter sphere
+            const emitterGeometry = new THREE.SphereGeometry(0.2, 24, 24);
+            const emitterMaterial = new THREE.MeshPhongMaterial({
+                color: 0xff4400,
+                emissive: 0xff4400,
+                emissiveIntensity: 1.5,
+                transparent: true,
+                opacity: 0.9
+            });
+            const emitter = new THREE.Mesh(emitterGeometry, emitterMaterial);
+            emitter.position.set(x, 0, z);
+            
+            // Glow sphere
+            const glowGeometry = new THREE.SphereGeometry(0.35, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff8800,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            emitter.add(glow);
+            
+            emitter.userData = {
+                angle: angle,
+                phase: (i / emitterCount) * Math.PI * 2,
+                originalScale: 1,
+                index: i
+            };
+            
+            emitters.push(emitter);
+            scene.add(emitter);
+        }
+        
+        // Energy Spokes (connecting emitters to center)
+        const spokes = [];
+        const spokeGroup = new THREE.Group();
+        scene.add(spokeGroup);
+        
+        for (let i = 0; i < emitterCount; i++) {
+            const angle = (i / emitterCount) * Math.PI * 2;
+            const x = Math.cos(angle) * emitterRadius;
+            const z = Math.sin(angle) * emitterRadius;
+            
+            // Create spoke as a cone (wider at emitter, narrow at center)
+            const spokeGeometry = new THREE.CylinderGeometry(0.02, 0.1, emitterRadius, 8);
+            const spokeMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffaa00,
+                transparent: true,
+                opacity: 0.6,
+                wireframe: false
+            });
+            const spoke = new THREE.Mesh(spokeGeometry, spokeMaterial);
+            
+            // Position and rotate spoke to point toward center
+            spoke.position.set(x/2, 0, z/2);
+            spoke.rotation.z = -angle + Math.PI/2;
+            
+            spoke.userData = { index: i, baseOpacity: 0.6 };
+            spokes.push(spoke);
+            spokeGroup.add(spoke);
+        }
+        
+        // Flow Particles (energy flowing along spokes)
+        const flowParticles = [];
+        const flowParticleGroup = new THREE.Group();
+        scene.add(flowParticleGroup);
+        
+        function createFlowParticle(emitterIndex) {
+            const angle = (emitterIndex / emitterCount) * Math.PI * 2;
+            const startX = Math.cos(angle) * emitterRadius;
+            const startZ = Math.sin(angle) * emitterRadius;
+            
+            const particleGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+            const particleMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff6600,
+                transparent: true,
+                opacity: 0.9
+            });
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            particle.position.set(startX, 0, startZ);
+            
+            particle.userData = {
+                startX: startX,
+                startZ: startZ,
+                progress: 0,
+                speed: 0.02 + Math.random() * 0.01,
+                emitterIndex: emitterIndex
+            };
+            
+            flowParticles.push(particle);
+            flowParticleGroup.add(particle);
+        }
+        
+        // Central Node (the wormhole throat with geometric structure)
+        const nodeGroup = new THREE.Group();
+        
+        // Main core
+        const nodeCoreGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const nodeCoreMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff0088,
+            emissive: 0xff0088,
+            emissiveIntensity: 1.2,
+            transparent: true,
+            opacity: 0.8,
+            shininess: 100
+        });
+        const nodeCore = new THREE.Mesh(nodeCoreGeometry, nodeCoreMaterial);
+        nodeGroup.add(nodeCore);
+        
+        // Inner glow layers
+        for (let i = 1; i <= 3; i++) {
+            const glowSize = 0.5 + (i * 0.15);
+            const glowGeometry = new THREE.SphereGeometry(glowSize, 24, 24);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff0088,
+                transparent: true,
+                opacity: 0.2 / i
+            });
+            const glowSphere = new THREE.Mesh(glowGeometry, glowMaterial);
+            nodeGroup.add(glowSphere);
+        }
+        
+        // Geometric structure rings (Fatou Set visualization)
+        for (let i = 0; i < 5; i++) {
+            const ringRadius = 0.3 + (i * 0.1);
+            const ringGeometry = new THREE.TorusGeometry(ringRadius, 0.02, 8, 32);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff4488,
+                transparent: true,
+                opacity: 0.6
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            ring.userData = { rotationSpeed: 0.01 * (i + 1) };
+            nodeGroup.add(ring);
+        }
+        
+        scene.add(nodeGroup);
+        
+        // Matryoshka Shield Shells
+        const shells = [];
+        const shellRadii = [3.5, 3.0, 2.5, 2.0, 1.5, 1.0, 0.5];
+        const shellRPMs = [10000, 15000, 20000, 25000, 30000, 35000, 40000];
+        const shellColors = [
+            0x0088ff, 0x0099ff, 0x00aaff,
+            0xff8800, 0xff9900,
+            0xff00ff, 0xff44ff
+        ];
+        
+        shellRadii.forEach((radius, i) => {
+            const geometry = new THREE.IcosahedronGeometry(radius, 2);
+            const material = new THREE.MeshPhongMaterial({
+                color: shellColors[i],
+                transparent: true,
+                opacity: 0.15,
+                wireframe: false,
+                side: THREE.DoubleSide,
+                emissive: shellColors[i],
+                emissiveIntensity: 0.2
+            });
+            const shell = new THREE.Mesh(geometry, material);
+            
+            const wireframeGeo = new THREE.EdgesGeometry(geometry);
+            const wireframeMat = new THREE.LineBasicMaterial({ 
+                color: shellColors[i], 
+                transparent: true, 
+                opacity: 0.4 
+            });
+            const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+            shell.add(wireframe);
+            
+            shell.userData = {
+                rotationAxis: new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize(),
+                rpm: shellRPMs[i],
+                index: i
+            };
+            
+            shells.push(shell);
+            scene.add(shell);
+        });
+        
+        // Grid and axes
+        const gridHelper = new THREE.GridHelper(30, 30, 0x00ff88, 0x003322);
+        gridHelper.position.y = -6;
+        scene.add(gridHelper);
+        
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+        
+        // Mouse controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+                
+                const rotationSpeed = 0.005;
+                const currentPos = camera.position.clone();
+                const distance = currentPos.length();
+                
+                // Rotate around Y axis
+                const angleY = deltaX * rotationSpeed;
+                currentPos.applyAxisAngle(new THREE.Vector3(0, 1, 0), -angleY);
+                
+                // Rotate around X axis
+                const angleX = deltaY * rotationSpeed;
+                const axis = new THREE.Vector3(-currentPos.z, 0, currentPos.x).normalize();
+                currentPos.applyAxisAngle(axis, -angleX);
+                
+                camera.position.copy(currentPos);
+                camera.lookAt(0, 0, 0);
+                
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.1;
+            const direction = e.deltaY > 0 ? 1 : -1;
+            const currentDistance = camera.position.length();
+            const newDistance = Math.max(5, Math.min(35, currentDistance * (1 + direction * zoomSpeed)));
+            camera.position.multiplyScalar(newDistance / currentDistance);
+            camera.lookAt(0, 0, 0);
+        }, { passive: false });
+        
+        // UI Controls
+        document.getElementById('powerSlider').addEventListener('input', (e) => {
+            systemPower = parseFloat(e.target.value);
+            document.getElementById('powerValue').textContent = systemPower.toFixed(0);
+            document.getElementById('powerBar').style.width = (systemPower / 2) + '%';
+        });
+        
+        document.getElementById('speedSlider').addEventListener('input', (e) => {
+            rotationSpeed = parseFloat(e.target.value);
+            document.getElementById('speedValue').textContent = rotationSpeed.toFixed(1);
+        });
+        
+        document.getElementById('pulseSlider').addEventListener('input', (e) => {
+            pulseFrequency = parseFloat(e.target.value);
+            document.getElementById('pulseValue').textContent = pulseFrequency.toFixed(1);
+        });
+        
+        document.getElementById('flowSlider').addEventListener('input', (e) => {
+            flowIntensity = parseFloat(e.target.value);
+            document.getElementById('flowValue').textContent = flowIntensity.toFixed(1);
+        });
+        
+        document.getElementById('distSlider').addEventListener('input', (e) => {
+            const dist = parseFloat(e.target.value);
+            const currentPos = camera.position.clone().normalize();
+            camera.position.copy(currentPos.multiplyScalar(dist));
+            camera.lookAt(0, 0, 0);
+            document.getElementById('distValue').textContent = dist;
+        });
+        
+        // Toggle buttons
+        document.getElementById('toggleTorus').addEventListener('click', function() {
+            showTorus = !showTorus;
+            torus.visible = showTorus;
+            plasma.visible = showTorus;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleEmitters').addEventListener('click', function() {
+            showEmitters = !showEmitters;
+            emitters.forEach(e => e.visible = showEmitters);
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleSpokes').addEventListener('click', function() {
+            showSpokes = !showSpokes;
+            spokeGroup.visible = showSpokes;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleFlowParticles').addEventListener('click', function() {
+            showFlowParticles = !showFlowParticles;
+            flowParticleGroup.visible = showFlowParticles;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleNode').addEventListener('click', function() {
+            showNode = !showNode;
+            nodeGroup.visible = showNode;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleShield').addEventListener('click', function() {
+            showShield = !showShield;
+            shells.forEach((shell, i) => {
+                if (shellVisibility[i]) shell.visible = showShield;
+            });
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleDensity').addEventListener('click', function() {
+            showDensity = !showDensity;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleWireframe').addEventListener('click', function() {
+            wireframeMode = !wireframeMode;
+            torusMaterial.wireframe = wireframeMode;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('toggleGrid').addEventListener('click', function() {
+            showGrid = !showGrid;
+            gridHelper.visible = showGrid;
+            axesHelper.visible = showGrid;
+            this.classList.toggle('active');
+        });
+        
+        document.getElementById('resetCamera').addEventListener('click', () => {
+            camera.position.set(18, 12, 18);
+            camera.lookAt(0, 0, 0);
+            document.getElementById('distSlider').value = 18;
+            document.getElementById('distValue').textContent = '18';
+        });
+        
+        // Shell controls
+        for (let i = 1; i <= 7; i++) {
+            document.getElementById(`shell${i}`).addEventListener('click', function() {
+                shellVisibility[i - 1] = !shellVisibility[i - 1];
+                shells[i - 1].visible = shellVisibility[i - 1] && showShield;
+                this.classList.toggle('active');
+            });
+        }
+        
+        // Animation loop
+        let frameCount = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            frameCount++;
+            
+            const time = Date.now() * 0.001;
+            const deltaTime = 1/60;
+            const powerFactor = systemPower / 100;
+            
+            // Rotate torus
+            if (showTorus) {
+                torus.rotation.y += 0.01 * rotationSpeed * powerFactor;
+                plasma.rotation.y += 0.015 * rotationSpeed * powerFactor;
+                plasma.rotation.x += 0.005 * rotationSpeed * powerFactor;
+                plasmaMaterial.opacity = 0.2 + Math.sin(time * 3) * 0.05;
+            }
+            
+            // Animate emitters with Φ-phase
+            emitters.forEach((emitter, i) => {
+                if (showEmitters) {
+                    const pulsePhase = (time * pulseFrequency + emitter.userData.phase) % (Math.PI * 2);
+                    const pulseIntensity = (Math.cos(pulsePhase) + 1) / 2;
+                    
+                    const scale = 1 + pulseIntensity * 0.6 * powerFactor;
+                    emitter.scale.set(scale, scale, scale);
+                    
+                    emitter.material.emissiveIntensity = 1 + pulseIntensity * 1.5 * powerFactor;
+                    
+                    // Generate flow particles at pulse peaks
+                    if (pulseIntensity > 0.9 && Math.random() < 0.15 * flowIntensity && showFlowParticles) {
+                        createFlowParticle(i);
+                    }
+                    
+                    // Update emitter color based on energy (thermal gradient)
+                    if (showDensity) {
+                        const hue = 0.05 - (pulseIntensity * 0.05); // Red to orange
+                        emitter.material.color.setHSL(hue, 1, 0.5);
+                        emitter.material.emissive.setHSL(hue, 1, 0.5);
+                    }
+                }
+            });
+            
+            // Animate spokes (pulsing energy flow)
+            if (showSpokes) {
+                spokes.forEach((spoke, i) => {
+                    const phase = (time * pulseFrequency * 2 + (i / emitterCount) * Math.PI * 2) % (Math.PI * 2);
+                    const intensity = (Math.sin(phase) + 1) / 2;
+                    
+                    spoke.material.opacity = (0.3 + intensity * 0.5) * flowIntensity * powerFactor;
+                    
+                    if (showDensity) {
+                        const hue = 0.08 - (intensity * 0.03); // Orange to yellow
+                        spoke.material.color.setHSL(hue, 1, 0.5);
+                    }
+                });
+            }
+            
+            // Update flow particles
+            if (showFlowParticles) {
+                for (let i = flowParticles.length - 1; i >= 0; i--) {
+                    const particle = flowParticles[i];
+                    particle.userData.progress += particle.userData.speed * flowIntensity * powerFactor;
+                    
+                    if (particle.userData.progress >= 1) {
+                        flowParticleGroup.remove(particle);
+                        flowParticles.splice(i, 1);
+                    } else {
+                        // Move along spoke toward center
+                        const t = particle.userData.progress;
+                        const x = particle.userData.startX * (1 - t);
+                        const z = particle.userData.startZ * (1 - t);
+                        particle.position.set(x, 0, z);
+                        
+                        // Fade and heat up as approaching center
+                        particle.material.opacity = (1 - t) * 0.9;
+                        particle.scale.setScalar(1 + t * 0.5);
+                        
+                        if (showDensity) {
+                            const hue = 0.08 - (t * 0.08); // Yellow to red
+                            particle.material.color.setHSL(hue, 1, 0.5);
+                        }
+                    }
+                }
+            }
+            
+            // Animate central node
+            if (showNode) {
+                const nodeScale = 1 + Math.sin(time * pulseFrequency * 1.5) * 0.25 * powerFactor;
+                nodeGroup.scale.set(nodeScale, nodeScale, nodeScale);
+                
+                nodeCoreMaterial.emissiveIntensity = 1 + Math.sin(time * pulseFrequency * 2) * 0.4 * powerFactor;
+                
+                // Rotate geometric rings
+                nodeGroup.children.forEach((child, i) => {
+                    if (child.userData.rotationSpeed) {
+                        child.rotation.y += child.userData.rotationSpeed * rotationSpeed;
+                    }
+                });
+                
+                // Slow rotation of entire node group
+                nodeGroup.rotation.y += 0.005 * rotationSpeed;
+            }
+            
+            // Rotate shells
+            shells.forEach((shell) => {
+                if (shell.visible) {
+                    const rpmFactor = shell.userData.rpm / 60000;
+                    shell.rotateOnAxis(shell.userData.rotationAxis, rpmFactor * rotationSpeed * powerFactor);
+                    shell.rotation.x += Math.sin(time + shell.userData.index) * 0.00015;
+                }
+            });
+            
+            // Update stats
+            const stability = 95 + Math.sin(time * 2) * 3 + (powerFactor * 5);
+            document.getElementById('stabilityValue').textContent = stability.toFixed(1) + '%';
+            
+            const concentration = Math.floor(25 + Math.sin(time * pulseFrequency) * 5 + (powerFactor * 10));
+            document.getElementById('concentrationValue').textContent = concentration + 'x';
+            
+            const coherence = 96 + Math.sin(time * 3) * 3 + (powerFactor * 4);
+            document.getElementById('coherenceValue').textContent = coherence.toFixed(1) + '%';
+            
+            document.getElementById('flowRateValue').textContent = pulseFrequency.toFixed(1) + ' GHz';
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start
+        animate();
+        
+        console.log('═══════════════════════════════════════════════════');
+        console.log('ZPE CYMATIC DRIVE - Ultra-Realistic Flow Visualization');
+        console.log('═══════════════════════════════════════════════════');
+        console.log('✓ 15-emitter synchronization: ACTIVE');
+        console.log('✓ Energy spoke flow: VISIBLE');
+        console.log('✓ Thermal density mapping: ENABLED');
+        console.log('✓ Geometric node structure: FORMING');
+        console.log('✓ Wormhole throat: DETECTED');
+        console.log('═══════════════════════════════════════════════════');
+    </script>
+</body>
+</html>
