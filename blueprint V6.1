@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZPE Resonance Drive - v6.0 CINEMATIC - Enhanced 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        canvas {
+            display: block;
+            background: radial-gradient(ellipse at 30% 40%, #001a33 0%, #000508 50%, #000000 100%);
+        }
+        
+        /* Semi-transparent draggable panels */
+        .panel {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(0, 10, 25, 0.75) 0%, rgba(0, 20, 40, 0.7) 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 15px;
+            padding: 18px;
+            box-shadow: 
+                0 0 40px rgba(0, 255, 255, 0.2),
+                inset 0 0 30px rgba(0, 100, 150, 0.1),
+                0 8px 32px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px) saturate(180%);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            resize: both;
+            overflow: auto;
+            min-width: 280px;
+            min-height: 150px;
+        }
+        
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ffff, #0088ff, #00ffff, #0088ff);
+            border-radius: 15px;
+            z-index: -1;
+            opacity: 0.4;
+            background-size: 300% 300%;
+            animation: gradient-shift 3s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .panel:hover {
+            background: linear-gradient(135deg, rgba(0, 10, 25, 0.85) 0%, rgba(0, 20, 40, 0.8) 100%);
+            box-shadow: 
+                0 0 60px rgba(0, 255, 255, 0.3),
+                inset 0 0 40px rgba(0, 150, 200, 0.15),
+                0 12px 48px rgba(0, 0, 0, 0.7);
+        }
+        
+        .panel.dragging {
+            cursor: move !important;
+            opacity: 0.8;
+            z-index: 1000;
+        }
+        
+        .panel-header {
+            cursor: move;
+            padding: 5px;
+            margin: -18px -18px 10px -18px;
+            background: rgba(0, 40, 80, 0.5);
+            border-radius: 15px 15px 0 0;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.3);
+        }
+        
+        .panel h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 17px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 
+                0 0 10px #00ffff,
+                0 0 20px #0088ff,
+                0 0 30px #00ffff;
+            padding-bottom: 10px;
+            position: relative;
+            animation: title-glow 2s ease-in-out infinite;
+            user-select: none;
+        }
+        
+        @keyframes title-glow {
+            0%, 100% { 
+                text-shadow: 0 0 10px #00ffff, 0 0 20px #0088ff;
+                letter-spacing: 3px;
+            }
+            50% { 
+                text-shadow: 0 0 20px #00ffff, 0 0 40px #0088ff, 0 0 60px #00ffff;
+                letter-spacing: 4px;
+            }
+        }
+        
+        .holo-text {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .holo-text::after {
+            content: attr(data-text);
+            position: absolute;
+            left: 2px;
+            top: 0;
+            color: #ff00ff;
+            opacity: 0.5;
+            z-index: -1;
+            animation: glitch 0.3s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); }
+            75% { transform: translate(-2px, -2px); }
+        }
+        
+        /* Panel positioning */
+        #activation-panel {
+            top: 15px;
+            left: 15px;
+            width: 420px;
+            max-height: 88vh;
+        }
+        
+        #telemetry {
+            top: 15px;
+            right: 15px;
+            width: 340px;
+        }
+        
+        #diagnostics {
+            bottom: 130px;
+            left: 15px;
+            width: 320px;
+        }
+        
+        #waveform-display {
+            top: 50%;
+            right: 15px;
+            transform: translateY(-50%);
+            width: 340px;
+        }
+        
+        #spectrum-display {
+            bottom: 130px;
+            right: 15px;
+            width: 340px;
+        }
+        
+        #camera-controls {
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        #mechanical-info {
+            top: 50%;
+            left: 15px;
+            transform: translateY(-50%);
+            width: 340px;
+        }
+        
+        .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .panel::-webkit-scrollbar-track {
+            background: rgba(0, 50, 100, 0.2);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        
+        .panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #00ffff, #0088ff);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+        }
+        
+        .step {
+            margin: 10px 0;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(0, 40, 80, 0.4) 0%, rgba(0, 20, 40, 0.6) 100%);
+            border-left: 5px solid #444;
+            border-radius: 8px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .step::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -100%;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, currentColor, transparent);
+            transition: top 0.3s ease;
+        }
+        
+        .step.active::before {
+            animation: energy-flow 2s linear infinite;
+        }
+        
+        @keyframes energy-flow {
+            0% { top: -100%; }
+            100% { top: 200%; }
+        }
+        
+        .step.active {
+            border-left-color: #ffff00;
+            background: linear-gradient(135deg, rgba(255, 255, 0, 0.2) 0%, rgba(255, 150, 0, 0.15) 100%);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 0, 0.4),
+                inset 0 0 20px rgba(255, 255, 0, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .step.complete {
+            border-left-color: #00ff00;
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.2) 0%, rgba(0, 200, 100, 0.15) 100%);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+        
+        .step.complete::after {
+            content: '\u2713';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            animation: check-appear 0.3s ease;
+        }
+        
+        @keyframes check-appear {
+            0% { transform: translateY(-50%) scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: translateY(-50%) scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .step-timer {
+            font-size: 12px;
+            color: #00ffff;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .step-details {
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(0, 100, 150, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff 0%, #00ff88 50%, #ffff00 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 
+                0 0 15px rgba(0, 255, 255, 0.8),
+                inset 0 0 10px rgba(255, 255, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            animation: progress-shimmer 1.5s infinite;
+        }
+        
+        @keyframes progress-shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .telemetry-item {
+            background: rgba(0, 30, 60, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .telemetry-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .telemetry-item:hover::before {
+            left: 100%;
+        }
+        
+        .telemetry-item:hover {
+            background: rgba(0, 40, 80, 0.6);
+            border-color: rgba(0, 255, 255, 0.6);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+        
+        .telemetry-label {
+            color: #00ffff;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: block;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        .telemetry-value {
+            color: #fff;
+            font-weight: bold;
+            font-size: 22px;
+            display: block;
+            text-shadow: 0 0 8px currentColor;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .telemetry-unit {
+            font-size: 13px;
+            color: #888;
+            margin-left: 6px;
+            font-weight: normal;
+        }
+        
+        .critical {
+            color: #ff0000 !important;
+            animation: blink-critical 0.6s infinite, shake 0.5s infinite;
+        }
+        
+        .warning {
+            color: #ffff00 !important;
+            animation: pulse-warning 1s infinite;
+        }
+        
+        .nominal {
+            color: #00ff00 !important;
+        }
+        
+        @keyframes blink-critical {
+            0%, 100% { opacity: 1; text-shadow: 0 0 15px currentColor; }
+            50% { opacity: 0.4; text-shadow: 0 0 5px currentColor; }
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { text-shadow: 0 0 8px currentColor; }
+            50% { text-shadow: 0 0 20px currentColor; }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .camera-btn {
+            background: rgba(0, 40, 80, 0.6);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 5px;
+        }
+        
+        .camera-btn:hover {
+            background: rgba(0, 60, 120, 0.8);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+        }
+        
+        .camera-btn.active {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+        
+        .camera-btn.cinematic {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.3), rgba(128, 0, 255, 0.3));
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .camera-btn.cinematic.active {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.5), rgba(128, 0, 255, 0.5));
+            box-shadow: 0 0 25px rgba(255, 0, 255, 0.9);
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 20px;
+            pointer-events: auto;
+        }
+        
+        button {
+            background: linear-gradient(135deg, rgba(0, 68, 102, 0.8) 0%, rgba(0, 34, 51, 0.9) 100%);
+            border: 3px solid #00ffff;
+            color: #00ffff;
+            padding: 16px 32px;
+            cursor: pointer;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 102, 136, 0.9) 0%, rgba(0, 68, 102, 0.95) 100%);
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.8);
+            transform: translateY(-3px) scale(1.05);
+            border-color: #ffffff;
+        }
+        
+        button:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        button.danger {
+            border-color: #ff0000;
+            color: #ff0000;
+            background: linear-gradient(135deg, rgba(102, 0, 0, 0.8) 0%, rgba(51, 0, 0, 0.9) 100%);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+        }
+        
+        button.danger:hover {
+            background: linear-gradient(135deg, rgba(136, 0, 0, 0.9) 0%, rgba(102, 0, 0, 0.95) 100%);
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.8);
+            border-color: #ff6666;
+        }
+        
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(1);
+            transform: none !important;
+        }
+        
+        .diagnostic-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(0, 30, 60, 0.4);
+            border-radius: 6px;
+            font-size: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .diagnostic-row:hover {
+            background: rgba(0, 40, 80, 0.6);
+            border-color: rgba(0, 255, 255, 0.5);
+            transform: translateX(5px);
+        }
+        
+        .diagnostic-label {
+            color: #00ffff;
+            text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        }
+        
+        .diagnostic-value {
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .diagnostic-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+            box-shadow: 0 0 10px currentColor;
+            position: relative;
+        }
+        
+        .diagnostic-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.3;
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        
+        @keyframes ping {
+            75%, 100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+        
+        .indicator-green {
+            background: #00ff00;
+            color: #00ff00;
+        }
+        
+        .indicator-yellow {
+            background: #ffff00;
+            color: #ffff00;
+            animation: pulse-indicator 1s infinite;
+        }
+        
+        .indicator-red {
+            background: #ff0000;
+            color: #ff0000;
+            animation: pulse-indicator 0.5s infinite;
+        }
+        
+        @keyframes pulse-indicator {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1); 
+                box-shadow: 0 0 10px currentColor;
+            }
+            50% { 
+                opacity: 0.5; 
+                transform: scale(1.4); 
+                box-shadow: 0 0 20px currentColor;
+            }
+        }
+        
+        #waveform-canvas, #spectrum-canvas {
+            width: 100%;
+            height: 200px;
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            background: rgba(0, 10, 20, 0.7);
+            border-radius: 8px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.2),
+                inset 0 0 30px rgba(0, 100, 150, 0.1);
+        }
+        
+        #spectrum-canvas {
+            border-color: rgba(255, 255, 0, 0.4);
+            height: 150px;
+        }
+        
+        .waveform-label, .spectrum-label {
+            text-align: center;
+            margin-top: 10px;
+            color: #00ffff;
+            font-size: 12px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .spectrum-label {
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+        }
+        
+        .mechanical-item {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(0, 30, 60, 0.4);
+            border-radius: 6px;
+            font-size: 11px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .mechanical-item:hover {
+            background: rgba(0, 40, 80, 0.6);
+            border-color: rgba(0, 255, 255, 0.5);
+            transform: translateX(5px);
+        }
+        
+        .mech-label {
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .mech-detail {
+            color: #aaa;
+            font-size: 10px;
+        }
+        
+        .status-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(0, 50, 100, 0.4);
+            overflow: hidden;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        
+        .status-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ffff 0%, #00ff88 25%, #ffff00 50%, #ff8800 75%, #ff0066 100%);
+            box-shadow: 0 0 15px currentColor;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .status-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            animation: shimmer 1s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        .particle {
+            position: fixed;
+            width: 3px;
+            height: 3px;
+            background: #00ffff;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 6px #00ffff;
+            animation: float-particle 4s linear infinite;
+        }
+        
+        @keyframes float-particle {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-120vh) translateX(80px) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        .screen-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 0) 50%, rgba(0, 150, 200, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            mix-blend-mode: screen;
+        }
+        
+        .screen-glow.active {
+            opacity: 1;
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes glow-pulse {
+            0%, 100% {
+                background: radial-gradient(ellipse at center, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 0.1) 50%, rgba(0, 150, 200, 0.2) 100%);
+            }
+            50% {
+                background: radial-gradient(ellipse at center, rgba(0, 255, 255, 0.1) 0%, rgba(0, 255, 255, 0.2) 50%, rgba(0, 200, 255, 0.3) 100%);
+            }
+        }
+        
+        .power-surge {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, rgba(255, 255, 0, 0.3) 0%, transparent 70%);
+            opacity: 0;
+            animation: surge-pulse 0.5s ease-out;
+        }
+        
+        @keyframes surge-pulse {
+            0%, 100% { opacity: 0; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .loading-ring {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            display: none;
+            pointer-events: none;
+            z-index: 10000;
+        }
+        
+        .loading-ring::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            border-radius: 50%;
+            border: 6px solid #00ffff;
+            border-color: #00ffff transparent #00ffff transparent;
+            animation: loading-spin 1.2s linear infinite;
+        }
+        
+        @keyframes loading-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 100, 150, 0.95) 0%, rgba(0, 50, 100, 0.95) 100%);
+            border: 3px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px 50px;
+            font-size: 24px;
+            color: #00ffff;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.8);
+            animation: success-appear 0.5s ease;
+            display: none;
+            z-index: 10000;
+        }
+        
+        @keyframes success-appear {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="status-bar">
+        <div class="status-bar-fill" id="global-progress"></div>
+    </div>
+    
+    <div class="screen-glow" id="screen-glow"></div>
+    <div class="loading-ring" id="loading-ring"></div>
+    
+    <div id="canvas-container">
+        <canvas id="mainCanvas"></canvas>
+    </div>
+    
+    <div class="panel" id="camera-controls">
+        <div class="panel-header">
+            <h2 style="margin: 0; padding: 10px; font-size: 14px;">\u25c8 CAMERA \u25c8</h2>
+        </div>
+        <button class="camera-btn active" data-view="orbit">\ud83d\udd04 ORBIT</button>
+        <button class="camera-btn" data-view="front">\u2b06 FRONT</button>
+        <button class="camera-btn" data-view="top">\u2b07 TOP</button>
+        <button class="camera-btn" data-view="side">\u27a1 SIDE</button>
+        <button class="camera-btn" data-view="inside">\ud83d\udc41 INSIDE</button>
+        <button class="camera-btn cinematic" data-view="cinematic">\ud83c\udfac CINEMATIC</button>
+    </div>
+    
+    <div class="panel" id="activation-panel">
+        <div class="panel-header">
+            <h2>\u26a1 ACTIVATION SEQUENCE \u26a1</h2>
+        </div>
+        <div id="steps-container"></div>
+    </div>
+    
+    <div class="panel" id="telemetry">
+        <div class="panel-header">
+            <h2>\u25c8 TELEMETRY DATA \u25c8</h2>
+        </div>
+        <div class="telemetry-grid">
+            <div class="telemetry-item">
+                <span class="telemetry-label">\u26a1 Power Output</span>
+                <span class="telemetry-value nominal holo-text" id="power-display" data-text="0.0">0.0<span class="telemetry-unit">MW</span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">\ud83d\udcfb Carrier Frequency</span>
+                <span class="telemetry-value holo-text" id="freq-display" data-text="0.00">0.00<span class="telemetry-unit">Hz</span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">\ud83c\udf00 Throat Radius</span>
+                <span class="telemetry-value holo-text" id="throat-display" data-text="0.0">0.0<span class="telemetry-unit">\u03bcm</span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">\u23f1 Time Dilation</span>
+                <span class="telemetry-value holo-text" id="timedilation-display" data-text="1.000">1.000<span class="telemetry-unit">\u00d7</span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">\ud83c\udfaf Julia |z|</span>
+                <span class="telemetry-value holo-text" id="julia-display-val" data-text="0.000000000">0.000000000<span class="telemetry-unit"></span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">🔮 Temporal Stability</span>
+                <span class="telemetry-value holo-text" id="tsi-display" data-text="0.000">0.000<span class="telemetry-unit">TSI</span></span>
+            </div>
+            <div class="telemetry-item">
+                <span class="telemetry-label">\ud83d\udea8 System Status</span>
+                <span class="telemetry-value nominal holo-text" id="status-display" data-text="STANDBY">STANDBY</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel" id="mechanical-info">
+        <div class="panel-header">
+            <h2>\ud83d\udd27 MECHANICAL SYSTEMS \ud83d\udd27</h2>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\ud83e\uddf2 Superconducting Magnet Coils</div>
+            <div class="mech-detail">16 Toroidal + 8 Poloidal NbTi coils @ 8 Tesla</div>
+            <div class="mech-detail">Current: <span id="magnet-current">0.0</span> kA</div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\u269b Casimir Cavity Array</div>
+            <div class="mech-detail">341 cavities, 150nm spacing, gold-plated copper</div>
+            <div class="mech-detail">Temp: <span id="casimir-temp">77</span> K (LN\u2082 cooled)</div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\ud83d\udce1 RF Emitter Array</div>
+            <div class="mech-detail">341 Flower of Life pattern emitters</div>
+            <div class="mech-detail">Active: <span id="emitters-active">0</span>/341</div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\ud83d\udd04 Matryoshka Rotation</div>
+            <div class="mech-detail">7 shells, counter-rotating, \u03a6-scaled speeds</div>
+            <div class="mech-detail">RPM: <span id="shell-rpm">0</span></div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\ud83d\udca7 Mercury Catalysis</div>
+            <div class="mech-detail">6% Hg vapor in H\u2082 plasma, 0.7% coupling</div>
+            <div class="mech-detail">Flow: <span id="hg-flow">0.0</span> mg/s</div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">\ud83d\udd0b Capacitor Banks</div>
+            <div class="mech-detail">480\u00d7 5kJ units for 47 TW pulse</div>
+            <div class="mech-detail">Charge: <span id="cap-charge">100</span>%</div>
+        </div>
+        <div class="mechanical-item">
+            <div class="mech-label">⚛ Axion Coupling Monitor</div>
+            <div class="mech-detail">CERN CP violation → Inflationary field link</div>
+            <div class="mech-detail">g_eff: <span id="axion-coupling">0.00</span> ×10⁴²</div>
+        </div>
+    </div>
+    
+    <div class="panel" id="diagnostics">
+        <div class="panel-header">
+            <h2>\u25c8 SYSTEM DIAGNOSTICS \u25c8</h2>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\ud83d\udd25 Plasma Chamber</span>
+            <span class="diagnostic-value" id="diag-plasma">NOMINAL</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-plasma"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\ud83e\uddf2 Magnetic Field</span>
+            <span class="diagnostic-value" id="diag-magnet">NOMINAL</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-magnet"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\u269b Casimir Array</span>
+            <span class="diagnostic-value" id="diag-casimir">STANDBY</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-casimir"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\ud83d\udee1 Matryoshka Shells</span>
+            <span class="diagnostic-value" id="diag-shells">SYNCED</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-shells"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\ud83c\udfae Julia Governor</span>
+            <span class="diagnostic-value" id="diag-julia">STABLE</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-julia"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">\ud83d\udd0b Capacitor Banks</span>
+            <span class="diagnostic-value" id="diag-caps">CHARGED</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-caps"></div>
+        </div>
+        <div class="diagnostic-row">
+            <span class="diagnostic-label">🌀 Entanglement Entropy</span>
+            <span class="diagnostic-value" id="diag-entropy">DORMANT</span>
+            <div class="diagnostic-indicator indicator-green" id="ind-entropy"></div>
+        </div>
+    </div>
+    
+    <div class="panel" id="waveform-display">
+        <div class="panel-header">
+            <h2>\u25c8 CARRIER WAVEFORM \u25c8</h2>
+        </div>
+        <canvas id="waveform-canvas"></canvas>
+        <div class="waveform-label" id="waveform-label">Signal: 0.00 Hz | Amplitude: 0.0%</div>
+    </div>
+    
+    <div class="panel" id="spectrum-display">
+        <div class="panel-header">
+            <h2>\u25c8 POWER SPECTRUM \u25c8</h2>
+        </div>
+        <canvas id="spectrum-canvas"></canvas>
+        <div class="spectrum-label" id="spectrum-label">Frequency Domain Analysis</div>
+    </div>
+    
+    <div id="controls">
+        <button id="btn-start"><span>\u25b6 START SEQUENCE</span></button>
+        <button id="btn-pause"><span>\u23f8 PAUSE</span></button>
+        <button id="btn-abort" class="danger"><span>\u23f9 EMERGENCY ABORT</span></button>
+        <button id="btn-reset"><span>\u21bb RESET SYSTEM</span></button>
+    </div>
+    
+    <div class="success-notification" id="success-notification">
+        <div style="font-size: 32px; margin-bottom: 20px;">\u2713 WORMHOLE STABILIZED</div>
+        <div style="font-size: 18px; color: #0ff;">Throat Radius: 3.17m | Power: 47.0 TW</div>
+        <div style="font-size: 16px; margin-top: 15px; color: #ff0;">Bridge Synchronized - Frozen Instant Active</div>
+        <div style="font-size: 14px; margin-top: 10px; color: #0f0;">Julia |z| = 1.999999999999999</div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Draggable panel system
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            const header = element.querySelector('.panel-header') || element.querySelector('h2');
+            
+            if (header) {
+                header.style.cursor = 'move';
+                header.onmousedown = dragMouseDown;
+            }
+            
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                element.classList.add('dragging');
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.transform = 'none';
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                element.classList.remove('dragging');
+            }
+        }
+        
+        // Make all panels draggable
+        document.querySelectorAll('.panel').forEach(panel => {
+            makeDraggable(panel);
+        });
+        
+        // Three.js scene with ENHANCED components
+        let scene, camera, renderer;
+        let torusMesh, shells = [], emitters = [], wormhole, particleSystem;
+        let magnetCoils = [], casimirPlates = [];
+        let cameraMode = 'orbit';
+        let cameraAngle = 0;
+        let cinematicTime = 0;
+        let cinematicKeyframe = 0;
+        
+        // Cinematic camera keyframes
+        const cinematicKeyframes = [
+            { pos: [0, 1000, 3000], lookAt: [0, 0, 0], duration: 5, fov: 60 },
+            { pos: [2500, 200, 2500], lookAt: [0, 0, 0], duration: 4, fov: 45 },
+            { pos: [-1500, 500, -1500], lookAt: [0, 100, 0], duration: 4, fov: 70 },
+            { pos: [0, 100, 500], lookAt: [0, 0, 0], duration: 3, fov: 40 },
+            { pos: [3000, 3000, 0], lookAt: [0, 0, 0], duration: 5, fov: 80 },
+            { pos: [0, -500, 2000], lookAt: [0, 500, 0], duration: 4, fov: 55 },
+            { pos: [1000, 2000, 1000], lookAt: [0, 0, 0], duration: 4, fov: 65 }
+        ];
+        
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000510, 0.00015);
+            
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 15000);
+            camera.position.set(0, 800, 2500);
+            
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('mainCanvas'),
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            // Enhanced lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const mainLight = new THREE.PointLight(0x00ffff, 1.5, 4000);
+            mainLight.position.set(0, 0, 0);
+            scene.add(mainLight);
+            
+            const rimLight1 = new THREE.PointLight(0x0088ff, 0.8, 6000);
+            rimLight1.position.set(1500, 1500, 1500);
+            scene.add(rimLight1);
+            
+            const rimLight2 = new THREE.PointLight(0xff00ff, 0.5, 5000);
+            rimLight2.position.set(-1500, -1500, -1500);
+            scene.add(rimLight2);
+            
+            // Create main torus with enhanced material
+            const torusGeometry = new THREE.TorusGeometry(150, 92.7, 48, 96);
+            const torusMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.3,
+                transparent: true,
+                opacity: 0.8,
+                wireframe: true,
+                side: THREE.DoubleSide
+            });
+            torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
+            scene.add(torusMesh);
+            
+            // Add magnetic coils (16 toroidal + 8 poloidal)
+            const coilMaterial = new THREE.MeshPhongMaterial({
+                color: 0x0088ff,
+                emissive: 0x0088ff,
+                emissiveIntensity: 0.2,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            // Toroidal coils
+            for (let i = 0; i < 16; i++) {
+                const angle = (i / 16) * Math.PI * 2;
+                const coilGeometry = new THREE.TorusGeometry(8, 3, 8, 16);
+                const coil = new THREE.Mesh(coilGeometry, coilMaterial.clone());
+                coil.position.x = 150 * Math.cos(angle);
+                coil.position.z = 150 * Math.sin(angle);
+                coil.rotation.y = angle;
+                coil.userData.baseRotation = angle;
+                magnetCoils.push(coil);
+                scene.add(coil);
+            }
+            
+            // Poloidal coils
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2;
+                const coilGeometry = new THREE.TorusGeometry(180, 4, 8, 32);
+                const coil = new THREE.Mesh(coilGeometry, coilMaterial.clone());
+                coil.rotation.x = Math.PI / 2;
+                coil.rotation.z = angle * 0.3;
+                coil.userData.baseRotation = angle;
+                magnetCoils.push(coil);
+                scene.add(coil);
+            }
+            
+            // Create Casimir plates with enhanced visual
+            const plateMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffaa00,
+                emissive: 0xffaa00,
+                emissiveIntensity: 0.1,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide
+            });
+            
+            for (let i = 0; i < 341; i++) {
+                const phi = Math.acos(1 - 2 * (i + 0.5) / 341);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+                
+                const plateGeometry = new THREE.BoxGeometry(2, 2, 0.1);
+                const plate = new THREE.Mesh(plateGeometry, plateMaterial.clone());
+                
+                plate.position.x = 210 * Math.sin(phi) * Math.cos(theta);
+                plate.position.y = 210 * Math.sin(phi) * Math.sin(theta);
+                plate.position.z = 210 * Math.cos(phi);
+                plate.lookAt(0, 0, 0);
+                
+                casimirPlates.push(plate);
+                scene.add(plate);
+            }
+            
+            // Create Matryoshka shells with PLASMA EFFECTS
+            const shellRadii = [75, 121, 196, 317, 513, 830, 1343];
+            const shellColors = [0x00ffff, 0x00ddff, 0x00bbff, 0x0099ff, 0x0077ff, 0x0055ff, 0x0033ff];
+            
+            shellRadii.forEach((radius, i) => {
+                const geometry = new THREE.SphereGeometry(radius, 48, 48);
+                const material = new THREE.MeshPhongMaterial({
+                    color: shellColors[i],
+                    transparent: true,
+                    opacity: 0.12,
+                    wireframe: true,
+                    side: THREE.DoubleSide,
+                    emissive: shellColors[i],
+                    emissiveIntensity: 0.1
+                });
+                const shell = new THREE.Mesh(geometry, material);
+                shell.userData.speed = i % 2 === 0 ? 0.0005 * Math.pow(1.5, i) : -0.0005 * Math.pow(1.5, i);
+                shell.userData.baseOpacity = 0.12;
+                shell.userData.radius = radius;
+                shell.userData.index = i;
+                shells.push(shell);
+                scene.add(shell);
+            });
+            
+            // Create RF emitters with ENHANCED ANIMATION
+            const emitterGeometry = new THREE.SphereGeometry(5, 12, 12);
+            for (let i = 0; i < 341; i++) {
+                const phi = Math.acos(1 - 2 * (i + 0.5) / 341);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+                
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0xffff00,
+                    transparent: true,
+                    opacity: 0
+                });
+                const emitter = new THREE.Mesh(emitterGeometry, material);
+                
+                emitter.position.x = 200 * Math.sin(phi) * Math.cos(theta);
+                emitter.position.y = 200 * Math.sin(phi) * Math.sin(theta);
+                emitter.position.z = 200 * Math.cos(phi);
+                
+                emitter.userData.basePosition = emitter.position.clone();
+                emitter.userData.phase = (i / 341) * Math.PI * 2;
+                
+                emitters.push(emitter);
+                scene.add(emitter);
+            }
+            
+            // Create wormhole throat
+            const wormholeGeometry = new THREE.CylinderGeometry(15, 15, 600, 64, 1, true);
+            const wormholeMaterial = new THREE.MeshPhongMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0,
+                side: THREE.DoubleSide,
+                emissive: 0x00ffff,
+                emissiveIntensity: 0.6
+            });
+            wormhole = new THREE.Mesh(wormholeGeometry, wormholeMaterial);
+            wormhole.rotation.x = Math.PI / 2;
+            scene.add(wormhole);
+            
+            // Create enhanced starfield
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
+            const starColors = [];
+            
+            for (let i = 0; i < 15000; i++) {
+                const x = (Math.random() - 0.5) * 12000;
+                const y = (Math.random() - 0.5) * 12000;
+                const z = (Math.random() - 0.5) * 12000;
+                starVertices.push(x, y, z);
+                
+                const color = new THREE.Color();
+                color.setHSL(Math.random() * 0.2 + 0.5, 0.5, Math.random() * 0.5 + 0.5);
+                starColors.push(color.r, color.g, color.b);
+            }
+            
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            starGeometry.setAttribute('color', new THREE.Float32BufferAttribute(starColors, 3));
+            
+            const starMaterial = new THREE.PointsMaterial({
+                size: 3,
+                transparent: true,
+                opacity: 0.9,
+                vertexColors: true
+            });
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+            
+            // Enhanced particle system
+            const particleCount = 3000;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+            const particleVelocities = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                particlePositions[i * 3] = (Math.random() - 0.5) * 2000;
+                particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 2000;
+                particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 2000;
+                
+                particleVelocities.push({
+                    x: (Math.random() - 0.5) * 0.5,
+                    y: (Math.random() - 0.5) * 0.5,
+                    z: (Math.random() - 0.5) * 0.5
+                });
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 4,
+                transparent: true,
+                opacity: 0,
+                blending: THREE.AdditiveBlending
+            });
+            
+            particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+            particleSystem.userData.velocities = particleVelocities;
+            scene.add(particleSystem);
+            
+            animate3D();
+        }
+        
+        function updateCamera() {
+            const time = Date.now() * 0.0001;
+            const distance = 2500;
+            
+            switch(cameraMode) {
+                case 'orbit':
+                    cameraAngle += 0.002;
+                    camera.position.x = Math.sin(cameraAngle) * distance;
+                    camera.position.z = Math.cos(cameraAngle) * distance;
+                    camera.position.y = 800 + Math.sin(cameraAngle * 0.5) * 400;
+                    camera.fov = 60;
+                    break;
+                    
+                case 'front':
+                    camera.position.set(0, 500, distance);
+                    camera.fov = 60;
+                    break;
+                    
+                case 'top':
+                    camera.position.set(0, distance, 0);
+                    camera.fov = 60;
+                    break;
+                    
+                case 'side':
+                    camera.position.set(distance, 500, 0);
+                    camera.fov = 60;
+                    break;
+                    
+                case 'inside':
+                    camera.position.set(0, 0, 0);
+                    camera.position.x = Math.sin(time) * 50;
+                    camera.position.y = Math.cos(time) * 50;
+                    camera.position.z = Math.sin(time * 0.5) * 50;
+                    camera.fov = 90;
+                    break;
+                    
+                case 'cinematic':
+                    updateCinematicCamera();
+                    return;
+            }
+            
+            camera.lookAt(scene.position);
+            camera.updateProjectionMatrix();
+        }
+        
+        function updateCinematicCamera() {
+            cinematicTime += 0.016;
+            
+            const currentKeyframe = cinematicKeyframes[cinematicKeyframe];
+            const nextKeyframe = cinematicKeyframes[(cinematicKeyframe + 1) % cinematicKeyframes.length];
+            
+            if (cinematicTime >= currentKeyframe.duration) {
+                cinematicTime = 0;
+                cinematicKeyframe = (cinematicKeyframe + 1) % cinematicKeyframes.length;
+                return;
+            }
+            
+            const t = cinematicTime / currentKeyframe.duration;
+            const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+            
+            camera.position.x = currentKeyframe.pos[0] + (nextKeyframe.pos[0] - currentKeyframe.pos[0]) * eased;
+            camera.position.y = currentKeyframe.pos[1] + (nextKeyframe.pos[1] - currentKeyframe.pos[1]) * eased;
+            camera.position.z = currentKeyframe.pos[2] + (nextKeyframe.pos[2] - currentKeyframe.pos[2]) * eased;
+            
+            camera.fov = currentKeyframe.fov + (nextKeyframe.fov - currentKeyframe.fov) * eased;
+            
+            const lookAtPos = new THREE.Vector3(
+                currentKeyframe.lookAt[0] + (nextKeyframe.lookAt[0] - currentKeyframe.lookAt[0]) * eased,
+                currentKeyframe.lookAt[1] + (nextKeyframe.lookAt[1] - currentKeyframe.lookAt[1]) * eased,
+                currentKeyframe.lookAt[2] + (nextKeyframe.lookAt[2] - currentKeyframe.lookAt[2]) * eased
+            );
+            camera.lookAt(lookAtPos);
+        }
+        
+        document.querySelectorAll('.camera-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.camera-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                cameraMode = btn.dataset.view;
+                
+                if (cameraMode === 'cinematic') {
+                    cinematicTime = 0;
+                    cinematicKeyframe = 0;
+                }
+            });
+        });
+        
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            updateCamera();
+            
+            const time = Date.now() * 0.001;
+            const powerRatio = systemState.power / 47000000;
+            
+            // Update torus with ENHANCED rotation
+            if (systemState.active && !systemState.paused) {
+                const speedFactor = (systemState.frequency / 10000) * 0.01;
+                torusMesh.rotation.x += speedFactor * 1.5;
+                torusMesh.rotation.y += speedFactor * 2.0;
+                torusMesh.rotation.z += speedFactor * 0.5;
+                
+                torusMesh.material.emissiveIntensity = 0.3 + powerRatio * 1.2;
+                torusMesh.material.opacity = 0.8 + powerRatio * 0.2;
+            }
+            
+            // Update magnetic coils with ROTATION
+            magnetCoils.forEach((coil, i) => {
+                if (systemState.active && !systemState.paused) {
+                    coil.rotation.z += 0.002 * (i + 1) * powerRatio;
+                    coil.material.emissiveIntensity = 0.2 + powerRatio * 0.8;
+                    
+                    const pulse = Math.sin(time * 3 + i * 0.5) * 0.5 + 0.5;
+                    coil.material.opacity = 0.6 + pulse * powerRatio * 0.3;
+                }
+            });
+            
+            // Update Casimir plates with FREQUENCY waves
+            casimirPlates.forEach((plate, i) => {
+                const phase = i / casimirPlates.length * Math.PI * 2;
+                const freqWave = Math.sin(time * systemState.frequency * 0.01 + phase);
+                const pulse = Math.sin(time * 2 + phase) * 0.5 + 0.5;
+                
+                plate.material.opacity = 0.3 + pulse * powerRatio * 0.4 + freqWave * 0.1;
+                plate.material.emissiveIntensity = 0.1 + pulse * powerRatio * 0.5;
+            });
+            
+            // Update shells with ENHANCED rotation and PLASMA EFFECTS
+            shells.forEach((shell, i) => {
+                if (systemState.active && !systemState.paused && systemState.currentStep >= 1) {
+                    // Multi-axis rotation
+                    shell.rotation.y += shell.userData.speed * (systemState.currentStep + 1) * 0.15;
+                    shell.rotation.x += shell.userData.speed * 0.08;
+                    shell.rotation.z += shell.userData.speed * 0.05;
+                    
+                    // Plasma effect on outer shell
+                    if (i === shells.length - 1) {
+                        const plasmaIntensity = powerRatio * 0.8;
+                        shell.material.opacity = shell.userData.baseOpacity + plasmaIntensity;
+                        shell.material.emissiveIntensity = 0.1 + plasmaIntensity;
+                        
+                        const plasmaPulse = Math.sin(time * 5) * 0.3 + 0.7;
+                        shell.material.color.setHSL(0.55 + powerRatio * 0.1, 1.0, 0.5 * plasmaPulse);
+                    } else {
+                        shell.material.opacity = shell.userData.baseOpacity + powerRatio * 0.35;
+                        shell.material.emissiveIntensity = 0.1 + powerRatio * 0.4;
+                    }
+                }
+            });
+            
+            // Update emitters with ENHANCED ANIMATION
+            const activeCount = Math.floor((systemState.stepProgress + systemState.currentStep) / steps.length * emitters.length);
+            emitters.forEach((emitter, i) => {
+                const phase = emitter.userData.phase;
+                const freqPhase = systemState.frequency * 0.01 * time + phase;
+                const wave = Math.sin(freqPhase * 3) * 0.5 + 0.5;
+                const pulse = Math.sin(time * 5 + phase * 10) * 0.5 + 0.5;
+                
+                if (i < activeCount) {
+                    emitter.material.opacity = (wave * 0.6 + 0.4) * (pulse * 0.3 + 0.7);
+                    
+                    const scale = 1 + wave * 0.5 + pulse * 0.3;
+                    emitter.scale.set(scale, scale, scale);
+                    
+                    // Frequency-based color shift
+                    const hue = 0.15 + (systemState.frequency / 10000) * 0.3;
+                    emitter.material.color.setHSL(hue, 1.0, 0.5);
+                    
+                    // Slight positional oscillation
+                    const oscillate = Math.sin(freqPhase) * 3 * powerRatio;
+                    const basePos = emitter.userData.basePosition;
+                    const dir = basePos.clone().normalize();
+                    emitter.position.copy(basePos).add(dir.multiplyScalar(oscillate));
+                } else {
+                    emitter.material.opacity = 0;
+                }
+            });
+            
+            // Update wormhole
+            if (systemState.throatRadius > 100000) {
+                const throatScale = systemState.throatRadius / 100000;
+                wormhole.material.opacity = Math.min(throatScale * 0.15, 0.75);
+                wormhole.scale.x = wormhole.scale.z = throatScale * 0.8;
+                wormhole.rotation.z += 0.02 * powerRatio;
+                
+                wormhole.material.emissiveIntensity = 0.6 + powerRatio * 0.4;
+            } else {
+                wormhole.material.opacity = 0;
+            }
+            
+            // Update enhanced particle system
+            if (systemState.active && systemState.power > 1000) {
+                const positions = particleSystem.geometry.attributes.position.array;
+                const velocities = particleSystem.userData.velocities;
+                
+                particleSystem.material.opacity = Math.min(powerRatio * 0.6, 0.8);
+                
+                for (let i = 0; i < positions.length / 3; i++) {
+                    const i3 = i * 3;
+                    
+                    const dx = -positions[i3];
+                    const dy = -positions[i3 + 1];
+                    const dz = -positions[i3 + 2];
+                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    
+                    if (distance > 10) {
+                        velocities[i].x += dx / distance * 0.05 * powerRatio;
+                        velocities[i].y += dy / distance * 0.05 * powerRatio;
+                        velocities[i].z += dz / distance * 0.05 * powerRatio;
+                    }
+                    
+                    const vortexStrength = 0.002 * powerRatio;
+                    velocities[i].x += -positions[i3 + 1] * vortexStrength;
+                    velocities[i].y += positions[i3] * vortexStrength;
+                    
+                    positions[i3] += velocities[i].x;
+                    positions[i3 + 1] += velocities[i].y;
+                    positions[i3 + 2] += velocities[i].z;
+                    
+                    if (distance > 1500) {
+                        positions[i3] = (Math.random() - 0.5) * 500;
+                        positions[i3 + 1] = (Math.random() - 0.5) * 500;
+                        positions[i3 + 2] = (Math.random() - 0.5) * 500;
+                    }
+                }
+                
+                particleSystem.geometry.attributes.position.needsUpdate = true;
+            } else {
+                particleSystem.material.opacity = 0;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            const waveformCanvas = document.getElementById('waveform-canvas');
+            const spectrumCanvas = document.getElementById('spectrum-canvas');
+            if (waveformCanvas) waveformCanvas.width = waveformCanvas.offsetWidth;
+            if (spectrumCanvas) spectrumCanvas.width = spectrumCanvas.offsetWidth;
+        });
+        
+        // Waveform display
+        const waveformCanvas = document.getElementById('waveform-canvas');
+        const waveformCtx = waveformCanvas.getContext('2d');
+        waveformCanvas.width = waveformCanvas.offsetWidth;
+        waveformCanvas.height = 200;
+        
+        let waveformData = new Array(waveformCanvas.width).fill(0);
+        
+        function updateWaveform() {
+            waveformCtx.fillStyle = 'rgba(0, 10, 20, 0.15)';
+            waveformCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
+            
+            waveformData.shift();
+            
+            const amplitude = (systemState.power / 47000000) * (waveformCanvas.height / 2 - 30);
+            const frequency = systemState.frequency / 100;
+            const phase = Date.now() / 1000 * frequency;
+            const value = Math.sin(phase) * amplitude;
+            waveformData.push(value);
+            
+            waveformCtx.strokeStyle = '#00ffff';
+            waveformCtx.lineWidth = 2;
+            waveformCtx.shadowBlur = 10;
+            waveformCtx.shadowColor = '#00ffff';
+            waveformCtx.beginPath();
+            
+            waveformData.forEach((val, i) => {
+                const x = i;
+                const y = waveformCanvas.height / 2 + val;
+                
+                if (i === 0) {
+                    waveformCtx.moveTo(x, y);
+                } else {
+                    waveformCtx.lineTo(x, y);
+                }
+            });
+            
+            waveformCtx.stroke();
+            waveformCtx.shadowBlur = 0;
+            
+            waveformCtx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
+            waveformCtx.lineWidth = 1;
+            
+            for (let i = 0; i < 5; i++) {
+                const y = (i / 4) * waveformCanvas.height;
+                waveformCtx.beginPath();
+                waveformCtx.moveTo(0, y);
+                waveformCtx.lineTo(waveformCanvas.width, y);
+                waveformCtx.stroke();
+            }
+            
+            waveformCtx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+            waveformCtx.lineWidth = 2;
+            waveformCtx.beginPath();
+            waveformCtx.moveTo(0, waveformCanvas.height / 2);
+            waveformCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
+            waveformCtx.stroke();
+            
+            const amplitudePercent = (amplitude / (waveformCanvas.height / 2) * 100).toFixed(1);
+            document.getElementById('waveform-label').textContent = 
+                `Signal: ${systemState.frequency.toFixed(2)} Hz | Amplitude: ${amplitudePercent}%`;
+        }
+        
+        // Spectrum analyzer
+        const spectrumCanvas = document.getElementById('spectrum-canvas');
+        const spectrumCtx = spectrumCanvas.getContext('2d');
+        spectrumCanvas.width = spectrumCanvas.offsetWidth;
+        spectrumCanvas.height = 150;
+        
+        let spectrumData = new Array(64).fill(0);
+        
+        function updateSpectrum() {
+            spectrumCtx.fillStyle = 'rgba(0, 10, 20, 0.2)';
+            spectrumCtx.fillRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
+            
+            const baseFreq = systemState.frequency;
+            const powerRatio = systemState.power / 47000000;
+            
+            for (let i = 0; i < 64; i++) {
+                const harmonic = i + 1;
+                const freqRatio = (harmonic * baseFreq) / 10000;
+                const amplitude = Math.exp(-freqRatio) * powerRatio;
+                const noise = Math.random() * 0.1;
+                
+                spectrumData[i] = spectrumData[i] * 0.8 + (amplitude + noise) * 0.2;
+            }
+            
+            const barWidth = spectrumCanvas.width / 64;
+            
+            spectrumData.forEach((value, i) => {
+                const x = i * barWidth;
+                const height = value * spectrumCanvas.height;
+                const y = spectrumCanvas.height - height;
+                
+                const gradient = spectrumCtx.createLinearGradient(0, y, 0, spectrumCanvas.height);
+                gradient.addColorStop(0, '#ffff00');
+                gradient.addColorStop(0.5, '#ff8800');
+                gradient.addColorStop(1, '#ff0000');
+                
+                spectrumCtx.fillStyle = gradient;
+                spectrumCtx.fillRect(x, y, barWidth - 1, height);
+                
+                spectrumCtx.shadowBlur = 10;
+                spectrumCtx.shadowColor = '#ffff00';
+                spectrumCtx.fillRect(x, y, barWidth - 1, height);
+                spectrumCtx.shadowBlur = 0;
+            });
+            
+            spectrumCtx.strokeStyle = 'rgba(255, 255, 0, 0.1)';
+            spectrumCtx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                const y = (i / 4) * spectrumCanvas.height;
+                spectrumCtx.beginPath();
+                spectrumCtx.moveTo(0, y);
+                spectrumCtx.lineTo(spectrumCanvas.width, y);
+                spectrumCtx.stroke();
+            }
+        }
+        
+        // Activation steps
+        const steps = [
+            {
+                title: "STEP 1: Carrier Establishment",
+                freq: 7.83,
+                power: 0.01,
+                duration: 30,
+                details: "7.83 Hz Schumann resonance - Ionospheric coupling initiated",
+                diagnostics: { plasma: "HEATING", magnet: "NOMINAL", casimir: "STANDBY" }
+            },
+            {
+                title: "STEP 2: Sideband Modulation",
+                freq: 42.8,
+                power: 0.1,
+                duration: 60,
+                details: "42.8 kHz parametric amplification - Creating resonance channels",
+                diagnostics: { plasma: "ACTIVE", magnet: "RAMPING", casimir: "COOLING" }
+            },
+            {
+                title: "STEP 3: Predictive Phase Lock",
+                freq: 128.4,
+                power: 0.5,
+                duration: 90,
+                details: "Julia governor engaged - 0.3s future phase projection active",
+                diagnostics: { plasma: "RESONANT", magnet: "8.0T", casimir: "77K", julia: "ENGAGED" }
+            },
+            {
+                title: "STEP 4: Throat Nucleation",
+                freq: 1000,
+                power: 1830,
+                duration: 120,
+                details: "1.83 GW threshold reached - Negative time delay detected",
+                diagnostics: { plasma: "CRITICAL", magnet: "PEAK", casimir: "ACTIVE", julia: "TRACKING" }
+            },
+            {
+                title: "STEP 5: Dilation Cascade",
+                freq: 5000,
+                power: 47000000,
+                duration: 45,
+                details: "1.83 GW \u2192 47 TW progressive ramp - Throat expanding quantum\u2192macroscopic",
+                diagnostics: { plasma: "EXTREME", magnet: "STABLE", casimir: "PEAK", shells: "PROTECTED", julia: "CONVERGING" }
+            },
+            {
+                title: "STEP 6: Stabilization Pulse",
+                freq: 10000,
+                power: 47000000,
+                duration: 0.84,
+                details: "47 TW pulse maintained - Throat diameter: 3.17m, stable configuration achieved",
+                diagnostics: { plasma: "MAXIMUM", magnet: "HOLD", casimir: "MAXIMUM", shells: "10\u2076\u00d7 DILATION", julia: "STABLE" }
+            },
+            {
+                title: "STEP 7: Bridge Synchronization",
+                freq: 10000,
+                power: 47000000,
+                duration: 1,
+                details: "Julia |z| \u2192 1.999999999999999 - Frozen instant achieved, bridge midpoint accessible",
+                diagnostics: { all: "SYNCHRONIZED", julia: "CONVERGED", throat: "OPEN", bridge: "ACTIVE" }
+            }
+        ];
+        
+        const stepsContainer = document.getElementById('steps-container');
+        steps.forEach((step, i) => {
+            const stepEl = document.createElement('div');
+            stepEl.className = 'step';
+            stepEl.id = `step-${i}`;
+            stepEl.innerHTML = `
+                <div class="step-header">
+                    <div class="step-title">${step.title}</div>
+                    <div class="step-timer" id="timer-${i}">--:--</div>
+                </div>
+                <div class="step-details">${step.details}</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-${i}"></div>
+                </div>
+            `;
+            stepsContainer.appendChild(stepEl);
+        });
+        
+        let systemState = {
+            active: false,
+            paused: false,
+            currentStep: -1,
+            stepProgress: 0,
+            stepStartTime: 0,
+            power: 0,
+            frequency: 0,
+            throatRadius: 0,
+            timeDilation: 1,
+            juliaZ: 0,
+            targetPower: 0,
+            targetFreq: 0
+        };
+        
+        const powerDisplay = document.getElementById('power-display');
+        const freqDisplay = document.getElementById('freq-display');
+        const throatDisplay = document.getElementById('throat-display');
+        const timeDilationDisplay = document.getElementById('timedilation-display');
+        const juliaDisplayVal = document.getElementById('julia-display-val');
+        const statusDisplay = document.getElementById('status-display');
+        const screenGlow = document.getElementById('screen-glow');
+        const globalProgress = document.getElementById('global-progress');
+        const loadingRing = document.getElementById('loading-ring');
+        const successNotification = document.getElementById('success-notification');
+        
+        const btnStart = document.getElementById('btn-start');
+        const btnPause = document.getElementById('btn-pause');
+        const btnAbort = document.getElementById('btn-abort');
+        const btnReset = document.getElementById('btn-reset');
+        
+        btnStart.addEventListener('click', () => {
+            if (!systemState.active) {
+                loadingRing.style.display = 'block';
+                setTimeout(() => {
+                    loadingRing.style.display = 'none';
+                    startSequence();
+                }, 1000);
+            }
+        });
+        
+        btnPause.addEventListener('click', () => {
+            systemState.paused = !systemState.paused;
+            btnPause.innerHTML = systemState.paused ? '<span>\u25b6 RESUME</span>' : '<span>\u23f8 PAUSE</span>';
+        });
+        
+        btnAbort.addEventListener('click', () => {
+            emergencyAbort();
+        });
+        
+        btnReset.addEventListener('click', () => {
+            resetSystem();
+        });
+        
+        function startSequence() {
+            systemState.active = true;
+            systemState.currentStep = 0;
+            systemState.stepProgress = 0;
+            systemState.stepStartTime = Date.now();
+            btnStart.disabled = true;
+            statusDisplay.textContent = 'ACTIVE';
+            statusDisplay.setAttribute('data-text', 'ACTIVE');
+            statusDisplay.className = 'telemetry-value warning holo-text';
+            
+            updateDiagnostic('plasma', 'HEATING', 'yellow');
+            updateDiagnostic('magnet', 'NOMINAL', 'green');
+        }
+        
+        function emergencyAbort() {
+            systemState.active = false;
+            systemState.paused = false;
+            statusDisplay.textContent = 'ABORTED';
+            statusDisplay.setAttribute('data-text', 'ABORTED');
+            statusDisplay.className = 'telemetry-value critical holo-text';
+            
+            const surge = document.createElement('div');
+            surge.className = 'power-surge';
+            surge.style.background = 'radial-gradient(circle at center, rgba(255, 0, 0, 0.5) 0%, transparent 70%)';
+            document.body.appendChild(surge);
+            
+            setTimeout(() => surge.remove(), 500);
+            
+            updateDiagnostic('plasma', 'QUENCH', 'red');
+            updateDiagnostic('magnet', 'DUMP', 'red');
+            updateDiagnostic('casimir', 'ABORT', 'red');
+            updateDiagnostic('julia', 'ABORT', 'red');
+            updateDiagnostic('shells', 'EMERGENCY', 'red');
+            
+            const abortInterval = setInterval(() => {
+                systemState.power *= 0.85;
+                systemState.frequency *= 0.9;
+                systemState.throatRadius *= 0.9;
+                
+                if (systemState.power < 0.01) {
+                    clearInterval(abortInterval);
+                    setTimeout(resetSystem, 2000);
+                }
+            }, 50);
+        }
+        
+        function resetSystem() {
+            systemState = {
+                active: false,
+                paused: false,
+                currentStep: -1,
+                stepProgress: 0,
+                stepStartTime: 0,
+                power: 0,
+                frequency: 0,
+                throatRadius: 0,
+                timeDilation: 1,
+                juliaZ: 0,
+                targetPower: 0,
+                targetFreq: 0
+            };
+            
+            successNotification.style.display = 'none';
+            screenGlow.classList.remove('active');
+            
+            btnStart.disabled = false;
+            btnPause.innerHTML = '<span>\u23f8 PAUSE</span>';
+            statusDisplay.textContent = 'STANDBY';
+            statusDisplay.setAttribute('data-text', 'STANDBY');
+            statusDisplay.className = 'telemetry-value nominal holo-text';
+            
+            updateDiagnostic('plasma', 'NOMINAL', 'green');
+            updateDiagnostic('magnet', 'NOMINAL', 'green');
+            updateDiagnostic('casimir', 'STANDBY', 'green');
+            updateDiagnostic('shells', 'SYNCED', 'green');
+            updateDiagnostic('julia', 'STABLE', 'green');
+            updateDiagnostic('caps', 'CHARGED', 'green');
+            
+            document.querySelectorAll('.step').forEach((step, i) => {
+                step.className = 'step';
+                document.getElementById(`progress-${i}`).style.width = '0%';
+                document.getElementById(`timer-${i}`).textContent = '--:--';
+            });
+            
+            globalProgress.style.width = '0%';
+        }
+        
+        function updateDiagnostic(system, status, color) {
+            const statusEl = document.getElementById(`diag-${system}`);
+            const indicatorEl = document.getElementById(`ind-${system}`);
+            
+            if (statusEl) statusEl.textContent = status;
+            if (indicatorEl) indicatorEl.className = `diagnostic-indicator indicator-${color}`;
+        }
+        
+        function updateSystem(dt) {
+            if (!systemState.active || systemState.paused) return;
+            
+            const currentStepData = steps[systemState.currentStep];
+            if (!currentStepData) return;
+            
+            const elapsed = (Date.now() - systemState.stepStartTime) / 1000;
+            systemState.stepProgress = Math.min(elapsed / currentStepData.duration, 1);
+            
+            document.getElementById(`progress-${systemState.currentStep}`).style.width = 
+                (systemState.stepProgress * 100) + '%';
+            
+            const remaining = Math.max(currentStepData.duration - elapsed, 0);
+            const minutes = Math.floor(remaining / 60);
+            const seconds = Math.floor(remaining % 60);
+            document.getElementById(`timer-${systemState.currentStep}`).textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            systemState.targetPower = currentStepData.power;
+            systemState.targetFreq = currentStepData.freq;
+            
+            const smoothness = 0.05;
+            systemState.power += (systemState.targetPower - systemState.power) * smoothness;
+            systemState.frequency += (systemState.targetFreq - systemState.frequency) * smoothness;
+            
+            if (systemState.power > 1000) {
+                const powerTW = systemState.power / 1000000;
+                systemState.throatRadius = Math.pow(powerTW / 0.0109, 0.8) * 1000000;
+            }
+            
+            if (systemState.power > 1000) {
+                systemState.timeDilation = 1 + Math.log10(systemState.power / 1000) * 100;
+            }
+            
+            if (systemState.currentStep >= 2) {
+                const powerNormalized = systemState.power / 47000000;
+                systemState.juliaZ = 1.999999999999999 * Math.pow(powerNormalized, 0.3);
+            }
+            
+            if (currentStepData.diagnostics) {
+                Object.entries(currentStepData.diagnostics).forEach(([system, status]) => {
+                    let color = 'green';
+                    if (status.includes('CRITICAL') || status.includes('EXTREME') || status.includes('MAX')) {
+                        color = 'red';
+                    } else if (status.includes('HEATING') || status.includes('RAMPING') || status.includes('ACTIVE')) {
+                        color = 'yellow';
+                    }
+                    updateDiagnostic(system, status, color);
+                });
+            }
+            
+            document.querySelectorAll('.step').forEach((step, i) => {
+                if (i < systemState.currentStep) {
+                    step.className = 'step complete';
+                } else if (i === systemState.currentStep) {
+                    step.className = 'step active';
+                } else {
+                    step.className = 'step';
+                }
+            });
+            
+            const totalProgress = (systemState.currentStep + systemState.stepProgress) / steps.length;
+            globalProgress.style.width = (totalProgress * 100) + '%';
+            
+            if (systemState.stepProgress >= 1) {
+                const surge = document.createElement('div');
+                surge.className = 'power-surge';
+                document.body.appendChild(surge);
+                setTimeout(() => surge.remove(), 500);
+                
+                systemState.currentStep++;
+                systemState.stepProgress = 0;
+                systemState.stepStartTime = Date.now();
+                
+                if (systemState.currentStep >= steps.length) {
+                    completeSequence();
+                }
+            }
+            
+            if (systemState.power > 10000000) {
+                screenGlow.classList.add('active');
+            }
+        }
+        
+        function completeSequence() {
+            systemState.active = false;
+            statusDisplay.textContent = 'WORMHOLE OPEN';
+            statusDisplay.setAttribute('data-text', 'WORMHOLE OPEN');
+            statusDisplay.className = 'telemetry-value nominal holo-text';
+            
+            successNotification.style.display = 'block';
+            setTimeout(() => {
+                successNotification.style.display = 'none';
+            }, 5000);
+            
+            updateDiagnostic('plasma', 'SYNCHRONIZED', 'green');
+            updateDiagnostic('magnet', 'SYNCHRONIZED', 'green');
+            updateDiagnostic('casimir', 'SYNCHRONIZED', 'green');
+            updateDiagnostic('shells', 'SYNCHRONIZED', 'green');
+            updateDiagnostic('julia', 'CONVERGED', 'green');
+            updateDiagnostic('caps', 'DISCHARGED', 'green');
+        }
+        
+        function updateTelemetry() {
+            let powerStr, powerUnit;
+            if (systemState.power < 1) {
+                powerStr = (systemState.power * 1000).toFixed(1);
+                powerUnit = 'kW';
+            } else if (systemState.power < 1000) {
+                powerStr = systemState.power.toFixed(1);
+                powerUnit = 'MW';
+            } else if (systemState.power < 1000000) {
+                powerStr = (systemState.power / 1000).toFixed(2);
+                powerUnit = 'GW';
+            } else {
+                powerStr = (systemState.power / 1000000).toFixed(2);
+                powerUnit = 'TW';
+            }
+            
+            powerDisplay.innerHTML = powerStr + '<span class="telemetry-unit">' + powerUnit + '</span>';
+            powerDisplay.setAttribute('data-text', powerStr);
+            
+            if (systemState.power > 1000000) {
+                powerDisplay.className = 'telemetry-value critical holo-text';
+            } else if (systemState.power > 1000) {
+                powerDisplay.className = 'telemetry-value warning holo-text';
+            } else {
+                powerDisplay.className = 'telemetry-value nominal holo-text';
+            }
+            
+            let freqStr, freqUnit;
+            if (systemState.frequency < 1000) {
+                freqStr = systemState.frequency.toFixed(2);
+                freqUnit = 'Hz';
+            } else if (systemState.frequency < 1000000) {
+                freqStr = (systemState.frequency / 1000).toFixed(2);
+                freqUnit = 'kHz';
+            } else {
+                freqStr = (systemState.frequency / 1000000).toFixed(2);
+                freqUnit = 'MHz';
+            }
+            
+            freqDisplay.innerHTML = freqStr + '<span class="telemetry-unit">' + freqUnit + '</span>';
+            freqDisplay.setAttribute('data-text', freqStr);
+            
+            let throatStr, throatUnit;
+            if (systemState.throatRadius < 1000) {
+                throatStr = systemState.throatRadius.toFixed(1);
+                throatUnit = 'μm';
+            } else if (systemState.throatRadius < 1000000) {
+                throatStr = (systemState.throatRadius / 1000).toFixed(2);
+                throatUnit = 'mm';
+            } else {
+                throatStr = (systemState.throatRadius / 1000000).toFixed(2);
+                throatUnit = 'm';
+            }
+            
+            throatDisplay.innerHTML = throatStr + '<span class="telemetry-unit">' + throatUnit + '</span>';
+            throatDisplay.setAttribute('data-text', throatStr);
+            
+            if (systemState.throatRadius > 3000000) {
+                throatDisplay.className = 'telemetry-value nominal holo-text';
+            }
+            
+            let dilationStr, dilationUnit;
+            if (systemState.timeDilation > 1000000) {
+                dilationStr = (systemState.timeDilation / 1000000).toFixed(2);
+                dilationUnit = 'M×';
+            } else if (systemState.timeDilation > 1000) {
+                dilationStr = (systemState.timeDilation / 1000).toFixed(2);
+                dilationUnit = 'K×';
+            } else {
+                dilationStr = systemState.timeDilation.toFixed(3);
+                dilationUnit = '×';
+            }
+            
+            timeDilationDisplay.innerHTML = dilationStr + '<span class="telemetry-unit">' + dilationUnit + '</span>';
+            timeDilationDisplay.setAttribute('data-text', dilationStr);
+            
+            const juliaStr = systemState.juliaZ.toFixed(15);
+            juliaDisplayVal.innerHTML = juliaStr + '<span class="telemetry-unit"></span>';
+            juliaDisplayVal.setAttribute('data-text', juliaStr);
+            
+            if (systemState.juliaZ > 1.99999999) {
+                juliaDisplayVal.className = 'telemetry-value critical holo-text';
+            } else if (systemState.juliaZ > 1.9) {
+                juliaDisplayVal.className = 'telemetry-value warning holo-text';
+            }
+            
+            const magnetCurrent = (systemState.power / 1000).toFixed(1);
+            document.getElementById('magnet-current').textContent = magnetCurrent;
+            
+            const casimirTemp = systemState.currentStep >= 2 ? '77' : '300';
+            document.getElementById('casimir-temp').textContent = casimirTemp;
+            
+            const emittersActive = Math.floor((systemState.stepProgress + systemState.currentStep) / steps.length * 341);
+            document.getElementById('emitters-active').textContent = emittersActive;
+            
+            const shellRPM = systemState.currentStep >= 1 ? (systemState.power / 1000).toFixed(0) : '0';
+            document.getElementById('shell-rpm').textContent = shellRPM;
+            
+            const hgFlow = (systemState.power / 10000).toFixed(1);
+            document.getElementById('hg-flow').textContent = hgFlow;
+            
+            const capCharge = Math.max(0, 100 - (systemState.power / 470000)).toFixed(0);
+            document.getElementById('cap-charge').textContent = capCharge;
+            
+            // ============================================================
+            // v6.1 PHYSICS ENHANCEMENTS - Axion, TSI, Entropy
+            // ============================================================
+            
+            // Update Axion Coupling (g_eff scales with power to 1.07×10^42)
+            const axionCoupling = (systemState.power / 47000000) * 1.07;
+            document.getElementById('axion-coupling').textContent = axionCoupling.toFixed(2);
+            
+            // Update Temporal Stability Index (TSI = 1.0 when shells sync perfectly)
+            let tsi = 0.0;
+            if (systemState.currentStep >= 1 && systemState.active) {
+                const shellSyncProgress = Math.min(systemState.currentStep / steps.length, 1.0);
+                tsi = shellSyncProgress;
+                
+                if (systemState.currentStep >= 6 && systemState.throatRadius > 3000000) {
+                    tsi = 1.0000;
+                }
+            }
+            
+            const tsiStr = tsi.toFixed(4);
+            const tsiDisplay = document.getElementById('tsi-display');
+            tsiDisplay.innerHTML = tsiStr + '<span class="telemetry-unit">TSI</span>';
+            tsiDisplay.setAttribute('data-text', tsiStr);
+            
+            if (tsi >= 0.9999) {
+                tsiDisplay.className = 'telemetry-value nominal holo-text';
+            } else if (tsi > 0.5) {
+                tsiDisplay.className = 'telemetry-value warning holo-text';
+            } else {
+                tsiDisplay.className = 'telemetry-value holo-text';
+            }
+            
+            // Update Entanglement Entropy Monitor
+            let entropyStatus = 'DORMANT';
+            let entropyColor = 'green';
+            
+            if (systemState.currentStep >= 4) {
+                const powerNorm = systemState.power / 47000000;
+                const mutualInfo = powerNorm * 2.5;
+                
+                if (mutualInfo > 2.0) {
+                    entropyStatus = 'BRIDGE ACTIVE';
+                    entropyColor = 'green';
+                } else if (mutualInfo > 1.0) {
+                    entropyStatus = 'ENTANGLING';
+                    entropyColor = 'yellow';
+                } else if (mutualInfo > 0.1) {
+                    entropyStatus = 'COUPLING';
+                    entropyColor = 'yellow';
+                }
+            }
+            
+            updateDiagnostic('entropy', entropyStatus, entropyColor);
+        }
+        
+        let lastTime = Date.now();
+        
+        function update() {
+            const currentTime = Date.now();
+            const dt = currentTime - lastTime;
+            lastTime = currentTime;
+            
+            updateSystem(dt);
+            updateTelemetry();
+            updateWaveform();
+            updateSpectrum();
+            
+            requestAnimationFrame(update);
+        }
+        
+        initThreeJS();
+        update();
+        
+        setInterval(() => {
+            if (systemState.active && systemState.power > 1000) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * window.innerWidth + 'px';
+                particle.style.bottom = '0px';
+                particle.style.animationDuration = (3 + Math.random() * 2) + 's';
+                particle.style.width = (2 + Math.random() * 3) + 'px';
+                particle.style.height = particle.style.width;
+                
+                const colors = ['#00ffff', '#0088ff', '#00ff88', '#ffff00'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 5000);
+            }
+        }, 150);
+        
+    </script>
+</body>
+</html>
